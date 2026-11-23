@@ -239,6 +239,31 @@ body.modal-open {
 .chips-scroll::-webkit-scrollbar {
   display: none;
 }
+.sub-filter-row {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0 1px;
+}
+.sub-filter-row.open {
+  display: flex;
+}
+.non-comp-toggle {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-sub);
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.non-comp-toggle.active {
+  background: rgba(239, 68, 68, 0.18);
+  border-color: rgba(239, 68, 68, 0.55);
+  color: var(--red-text);
+}
 .sub-kana-row {
   display: none;
   align-items: center;
@@ -1007,7 +1032,6 @@ body.modal-open {
     <div class="control-row">
       <select id="sortSelect" class="select-box" aria-label="並び替え">
         <option value="kana">50音順</option>
-        <option value="unpriced_non_comp_first">コンプ以外＆金額未入力を優先</option>
         <option value="complete_owned_first">完結（1巻以上所持を優先）</option>
         <option value="complete_all">完結</option>
         <option value="missing_partial_first">優先</option>
@@ -1026,6 +1050,11 @@ body.modal-open {
       <button type="button" class="chip" data-filter="unstarted">未購入</button>
       <button type="button" class="chip" data-filter="ongoing">連載中</button>
       <button type="button" class="chip" data-filter="comp">コンプ</button>
+      <button type="button" class="chip" data-filter="priced">金額入力済み</button>
+      <button type="button" class="chip" data-filter="unpriced">金額未入力</button>
+    </div>
+    <div class="sub-filter-row" id="subFilterRow">
+      <button type="button" class="non-comp-toggle" id="nonCompOnlyToggle">コンプ以外のみ</button>
     </div>
     <div class="chips-scroll" id="kanaChips" aria-label="50音行絞り込み">
       <button type="button" class="chip kana-chip" data-kana="a">あ</button>
@@ -1188,6 +1217,7 @@ if (!Array.isArray(books) || books.length === 0) {
 
 let currentTab = "shelf"; // "shelf" | "shopping" | "calc"
 let currentFilter = "all";
+let nonCompOnly = false;
 let currentKana = null;
 let currentChar = null;
 let currentPubFilter = "";
@@ -1241,6 +1271,17 @@ function updateCalcSummary() {
   const priceEl = document.getElementById("calcSelectedTotalPrice");
   if (countEl) countEl.textContent = selectedCount.toLocaleString();
   if (priceEl) priceEl.textContent = `¥${totalPrice.toLocaleString()}`;
+}
+
+function syncSubFilterRow() {
+  const row = document.getElementById("subFilterRow");
+  const toggle = document.getElementById("nonCompOnlyToggle");
+  const show = currentFilter === "priced" || currentFilter === "unpriced";
+  row.classList.toggle("open", show);
+  if (!show) {
+    nonCompOnly = false;
+  }
+  toggle.classList.toggle("active", nonCompOnly);
 }
 
 function toHiraganaFirstChar(str) {
@@ -1466,10 +1507,6 @@ function getDerivedStatus(book) {
   return book.status === "連載中" ? "既刊まで所持" : "コンプ";
 }
 
-function isUnpricedNonComp(book) {
-  return getDerivedStatus(book) !== "コンプ" && (Number(book.price) || 0) <= 0;
-}
-
 function compareKana(a, b) {
   const ka = (a.yomi || a.title || "").trim();
   const kb = (b.yomi || b.title || "").trim();
@@ -1505,6 +1542,11 @@ function getFilteredAndSortedBooks() {
     const ownedCount = getMainOwnedCount(book);
     const missingCount = getMissingMainCount(book);
     const derived = getDerivedStatus(book);
+    const hasPrice = (Number(book.price) || 0) > 0;
+
+    if ((currentFilter === "priced" || currentFilter === "unpriced") && nonCompOnly && derived === "コンプ") {
+      return false;
+    }
 
     switch (currentFilter) {
       case "complete_all":
@@ -1519,6 +1561,10 @@ function getFilteredAndSortedBooks() {
         return book.status === "連載中";
       case "comp":
         return derived === "コンプ";
+      case "priced":
+        return hasPrice;
+      case "unpriced":
+        return !hasPrice;
       default:
         return true;
     }
@@ -1530,12 +1576,6 @@ function getFilteredAndSortedBooks() {
     const ma = getMissingMainCount(a);
     const mb = getMissingMainCount(b);
     if (currentSort === "kana") {
-      return compareKana(a, b);
-    }
-    if (currentSort === "unpriced_non_comp_first") {
-      const ra = isUnpricedNonComp(a) ? 0 : 1;
-      const rb = isUnpricedNonComp(b) ? 0 : 1;
-      if (ra !== rb) return ra - rb;
       return compareKana(a, b);
     }
     if (currentSort === "complete_owned_first") {
@@ -1634,6 +1674,7 @@ function syncTabUi() {
 
 function renderList() {
   syncTabUi();
+  syncSubFilterRow();
   const list = getFilteredAndSortedBooks();
   const container = document.getElementById("bookList");
   renderSummaryStats(list);
@@ -2406,8 +2447,15 @@ document.getElementById("filterChips").querySelectorAll(".chip").forEach(chip =>
     document.getElementById("filterChips").querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
     chip.classList.add("active");
     currentFilter = chip.getAttribute("data-filter");
+    if (currentFilter !== "priced" && currentFilter !== "unpriced") {
+      nonCompOnly = false;
+    }
     renderList();
   });
+});
+document.getElementById("nonCompOnlyToggle").addEventListener("click", () => {
+  nonCompOnly = !nonCompOnly;
+  renderList();
 });
 document.getElementById("kanaChips").querySelectorAll(".kana-chip").forEach(chip => {
   chip.addEventListener("click", () => {
