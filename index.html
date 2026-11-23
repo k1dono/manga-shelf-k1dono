@@ -130,7 +130,7 @@ body.modal-open {
 /* Mode Tabs */
 .mode-tabs {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
   gap: 6px;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -143,14 +143,15 @@ body.modal-open {
   background: transparent;
   color: var(--text-sub);
   border-radius: 9px;
-  padding: 8px 10px;
-  font-size: 13px;
+  padding: 8px 6px;
+  font-size: 12px;
   font-weight: 800;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 4px;
+  white-space: nowrap;
 }
 .mode-tab.active {
   background: var(--accent);
@@ -306,22 +307,23 @@ body.modal-open {
 .summary-price strong {
   color: #fdba74;
 }
-.shop-selection-bar {
+.calc-summary-bar {
   margin-top: 6px;
   padding-top: 6px;
-  border-top: 1px solid rgba(59, 130, 246, 0.35);
+  border-top: 1px solid rgba(249, 115, 22, 0.4);
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 6px 12px;
-  color: var(--blue-text);
+  color: #fdba74;
 }
-.shop-selection-bar strong {
+.calc-summary-bar strong {
   color: #fff;
 }
-.shop-selection-bar .shop-total-price strong {
+.calc-summary-bar .calc-total-price strong {
   color: #fdba74;
+  font-size: 14px;
 }
 
 /* Book List */
@@ -423,6 +425,61 @@ body.modal-open {
   background: var(--blue-bg);
   border-color: rgba(59, 130, 246, 0.5);
   color: var(--blue-text);
+}
+
+/* Calc Page Cards */
+.calc-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+.calc-card.checked {
+  background: rgba(249, 115, 22, 0.08);
+  border-color: rgba(249, 115, 22, 0.55);
+}
+.calc-checkbox {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: 2px solid var(--text-sub);
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 900;
+  color: #fff;
+}
+.calc-card.checked .calc-checkbox {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.calc-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  word-break: break-word;
+}
+.calc-price-text {
+  font-size: 14px;
+  font-weight: 800;
+  color: #fdba74;
+  flex-shrink: 0;
+}
+.calc-price-text.unpriced {
+  color: var(--text-sub);
+  font-weight: 600;
+  font-size: 12px;
 }
 
 .book-main {
@@ -931,11 +988,15 @@ body.modal-open {
         <button type="button" class="icon-btn" id="clearShopSelectionBtn">選択解除</button>
         <button type="button" class="icon-btn commit-btn" id="commitShopSelectionBtn">完了 (<span id="selectedShopCount">0</span>)</button>
       </div>
+      <div class="header-actions" id="calcHeaderActions" style="display:none;">
+        <button type="button" class="icon-btn" id="clearCalcSelectionBtn">選択解除</button>
+      </div>
     </div>
 
     <div class="mode-tabs" role="tablist">
       <button type="button" class="mode-tab active" data-tab="shelf" id="tabShelfBtn">📚 本棚</button>
       <button type="button" class="mode-tab" data-tab="shopping" id="tabShoppingBtn">🛒 未所持 <span class="tab-badge" id="missingTabBadge">0</span></button>
+      <button type="button" class="mode-tab" data-tab="calc" id="tabCalcBtn">🧮 金額計算</button>
     </div>
 
     <div class="search-wrap">
@@ -992,9 +1053,9 @@ body.modal-open {
       <span>所持率: <strong id="overallOwnedRate">0.0%</strong></span>
       <span class="summary-price">金額合計: <strong id="totalPriceSummary">¥0</strong></span>
     </div>
-    <div class="shop-selection-bar" id="shopSelectionBar" style="display:none;">
-      <span>選択中: <strong id="shopSelectedTitlesCount">0</strong>作品 / <strong id="shopSelectedVolsCount">0</strong>冊</span>
-      <span class="shop-total-price">選択タイトル合計金額: <strong id="shopSelectedTotalPrice">¥0</strong></span>
+    <div class="calc-summary-bar" id="calcSummaryBar" style="display:none;">
+      <span>選択タイトル: <strong id="calcSelectedTitlesCount">0</strong>作品</span>
+      <span class="calc-total-price">合計金額: <strong id="calcSelectedTotalPrice">¥0</strong></span>
     </div>
   </div>
 </div>
@@ -1125,7 +1186,7 @@ if (!Array.isArray(books) || books.length === 0) {
   books = cloneInitialBooks();
 }
 
-let currentTab = "shelf"; // "shelf" | "shopping"
+let currentTab = "shelf"; // "shelf" | "shopping" | "calc"
 let currentFilter = "all";
 let currentKana = null;
 let currentChar = null;
@@ -1138,6 +1199,9 @@ let customUnitVols = 0;
 
 // Shopping tab selections: Map<bookId, Set<string>> where token is "main:1", "vol0", "spin:1"
 const shoppingSelections = new Map();
+
+// Calc tab selections: Set<bookId>
+const calcSelectedIds = new Set();
 
 function getShopBookSet(bookId) {
   if (!shoppingSelections.has(bookId)) {
@@ -1154,33 +1218,29 @@ function getTotalSelectedShopCount() {
   return total;
 }
 
-function getSelectedShopStats() {
-  let selectedTitles = 0;
-  let selectedVols = 0;
-  let selectedPriceSum = 0;
-
-  shoppingSelections.forEach((set, bookId) => {
-    if (!set || set.size === 0) return;
-    const book = books.find(b => b.id === bookId);
-    if (!book) return;
-    selectedTitles += 1;
-    selectedVols += set.size;
-    selectedPriceSum += (Number(book.price) || 0);
-  });
-
-  return { selectedTitles, selectedVols, selectedPriceSum };
-}
-
 function updateShopHeaderCounter() {
   const countEl = document.getElementById("selectedShopCount");
-  const { selectedTitles, selectedVols, selectedPriceSum } = getSelectedShopStats();
-  if (countEl) countEl.textContent = selectedVols;
-  const titlesEl = document.getElementById("shopSelectedTitlesCount");
-  const volsEl = document.getElementById("shopSelectedVolsCount");
-  const priceEl = document.getElementById("shopSelectedTotalPrice");
-  if (titlesEl) titlesEl.textContent = selectedTitles.toLocaleString();
-  if (volsEl) volsEl.textContent = selectedVols.toLocaleString();
-  if (priceEl) priceEl.textContent = `¥${selectedPriceSum.toLocaleString()}`;
+  if (countEl) countEl.textContent = getTotalSelectedShopCount();
+}
+
+function getCalcStats() {
+  let selectedCount = 0;
+  let totalPrice = 0;
+  calcSelectedIds.forEach(bId => {
+    const book = books.find(b => b.id === bId);
+    if (!book) return;
+    selectedCount += 1;
+    totalPrice += (Number(book.price) || 0);
+  });
+  return { selectedCount, totalPrice };
+}
+
+function updateCalcSummary() {
+  const { selectedCount, totalPrice } = getCalcStats();
+  const countEl = document.getElementById("calcSelectedTitlesCount");
+  const priceEl = document.getElementById("calcSelectedTotalPrice");
+  if (countEl) countEl.textContent = selectedCount.toLocaleString();
+  if (priceEl) priceEl.textContent = `¥${totalPrice.toLocaleString()}`;
 }
 
 function toHiraganaFirstChar(str) {
@@ -1556,17 +1616,20 @@ function renderSummaryStats(visibleList) {
   const totalPrice = books.reduce((sum, b) => sum + (Number(b.price) || 0), 0);
   document.getElementById("totalPriceSummary").textContent = `¥${totalPrice.toLocaleString()}`;
 
-  document.getElementById("shopSelectionBar").style.display = currentTab === "shopping" ? "flex" : "none";
-  updateShopHeaderCounter();
+  document.getElementById("calcSummaryBar").style.display = currentTab === "calc" ? "flex" : "none";
+  updateCalcSummary();
 }
 
 function syncTabUi() {
-  const isShop = currentTab === "shopping";
-  document.getElementById("tabShelfBtn").classList.toggle("active", !isShop);
-  document.getElementById("tabShoppingBtn").classList.toggle("active", isShop);
-  document.getElementById("mainHeaderActions").style.display = isShop ? "none" : "flex";
-  document.getElementById("shopHeaderActions").style.display = isShop ? "flex" : "none";
+  document.getElementById("tabShelfBtn").classList.toggle("active", currentTab === "shelf");
+  document.getElementById("tabShoppingBtn").classList.toggle("active", currentTab === "shopping");
+  document.getElementById("tabCalcBtn").classList.toggle("active", currentTab === "calc");
+
+  document.getElementById("mainHeaderActions").style.display = currentTab === "shelf" ? "flex" : "none";
+  document.getElementById("shopHeaderActions").style.display = currentTab === "shopping" ? "flex" : "none";
+  document.getElementById("calcHeaderActions").style.display = currentTab === "calc" ? "flex" : "none";
   updateShopHeaderCounter();
+  updateCalcSummary();
 }
 
 function renderList() {
@@ -1577,6 +1640,33 @@ function renderList() {
 
   if (list.length === 0) {
     container.innerHTML = `<div class="empty-state">${currentTab === "shopping" ? "未所持の作品はありません" : "条件に一致する作品がありません"}</div>`;
+    return;
+  }
+
+  if (currentTab === "calc") {
+    container.innerHTML = list.map(book => {
+      const checked = calcSelectedIds.has(book.id);
+      const p = Number(book.price) || 0;
+      const priceHtml = p > 0
+        ? `<span class="calc-price-text">¥${p.toLocaleString()}</span>`
+        : `<span class="calc-price-text unpriced">未入力</span>`;
+      return `
+        <div class="calc-card ${checked ? "checked" : ""}" data-calc-id="${book.id}">
+          <span class="calc-checkbox">${checked ? "✓" : ""}</span>
+          <span class="calc-title">${escapeHtml(book.title)}</span>
+          ${priceHtml}
+        </div>
+      `;
+    }).join("");
+
+    container.querySelectorAll(".calc-card").forEach(card => {
+      card.addEventListener("click", () => {
+        const bId = Number(card.getAttribute("data-calc-id"));
+        if (calcSelectedIds.has(bId)) calcSelectedIds.delete(bId);
+        else calcSelectedIds.add(bId);
+        renderList();
+      });
+    });
     return;
   }
 
@@ -1726,7 +1816,7 @@ function renderList() {
   });
 }
 
-// Shopping Tab Actions
+// Tab Actions
 document.getElementById("tabShelfBtn").addEventListener("click", () => {
   currentTab = "shelf";
   renderList();
@@ -1734,6 +1824,16 @@ document.getElementById("tabShelfBtn").addEventListener("click", () => {
 
 document.getElementById("tabShoppingBtn").addEventListener("click", () => {
   currentTab = "shopping";
+  renderList();
+});
+
+document.getElementById("tabCalcBtn").addEventListener("click", () => {
+  currentTab = "calc";
+  renderList();
+});
+
+document.getElementById("clearCalcSelectionBtn").addEventListener("click", () => {
+  calcSelectedIds.clear();
   renderList();
 });
 
@@ -2228,6 +2328,7 @@ function renderDetailBody() {
       if (confirm(`本当に「${draftBook.title}」を本棚から削除しますか？`)) {
         books = books.filter(b => b.id !== editingBookId);
         shoppingSelections.delete(editingBookId);
+        calcSelectedIds.delete(editingBookId);
         saveBooks(books);
         refreshPubFilterOptions();
         closeDetailModal();
@@ -2366,6 +2467,7 @@ document.getElementById("importJsonInput").addEventListener("change", e => {
       if (!Array.isArray(imported)) throw new Error("Invalid format");
       books = imported.map(b => normalizeBook(b));
       shoppingSelections.clear();
+      calcSelectedIds.clear();
       saveBooks(books);
       refreshPubFilterOptions();
       renderList();
@@ -2383,6 +2485,7 @@ document.getElementById("resetInitialBtn").addEventListener("click", () => {
   if (confirm("現在のデータを消去して、最初の72作品データに戻しますか？")) {
     books = cloneInitialBooks();
     shoppingSelections.clear();
+    calcSelectedIds.clear();
     saveBooks(books);
     refreshPubFilterOptions();
     renderList();
