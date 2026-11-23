@@ -186,7 +186,7 @@ body.modal-open {
   display: flex;
   gap: 6px;
   overflow-x: auto;
-  padding: 8px 0 2px;
+  padding: 7px 0 1px;
   scrollbar-width: none;
 }
 .chips-scroll::-webkit-scrollbar {
@@ -207,6 +207,11 @@ body.modal-open {
 .chip.active {
   background: var(--accent);
   border-color: var(--accent);
+  color: #fff;
+}
+.kana-chip.active {
+  background: var(--blue);
+  border-color: var(--blue);
   color: #fff;
 }
 
@@ -641,11 +646,6 @@ body.modal-open {
   border-color: rgba(168, 85, 247, 0.4);
   background: var(--purple-bg);
 }
-.sub-action-btn.teal {
-  color: var(--teal-text);
-  border-color: rgba(20, 184, 166, 0.4);
-  background: var(--teal-bg);
-}
 .sub-action-btn.danger-sm {
   color: var(--red-text);
   border-color: rgba(239, 68, 68, 0.35);
@@ -698,7 +698,7 @@ body.modal-open {
       <span class="app-title-badge" id="totalCountBadge">0作品</span>
     </div>
     <div class="header-actions">
-      <button type="button" class="icon-btn" id="openBackupBtn" title="バックアップ・復元">⚙ 保存/復元</button>
+      <button type="button" class="icon-btn" id="openBackupBtn" title="保存・復元">⚙ 保存/復元</button>
       <button type="button" class="icon-btn primary" id="addBookBtn">＋ 追加</button>
     </div>
   </div>
@@ -709,23 +709,35 @@ body.modal-open {
   </div>
   <div class="control-row">
     <select id="sortSelect" class="select-box" aria-label="並び替え">
-      <option value="kana">並び順：50音順（読みがな）</option>
-      <option value="complete_owned_first">並び順：完結（1巻以上所持を優先）</option>
-      <option value="complete_all">並び順：完結（すべて・50音順）</option>
-      <option value="missing_partial_first">並び順：買い足し優先（1巻以上所持の未所持）</option>
-      <option value="missing_count_desc">並び順：未所持巻数が多い順</option>
-      <option value="owned_count_desc">並び順：所持巻数が多い順</option>
+      <option value="kana">50音順</option>
+      <option value="complete_owned_first">完結（1巻以上所持を優先）</option>
+      <option value="complete_all">完結</option>
+      <option value="missing_partial_first">優先</option>
+      <option value="missing_count_desc">未所持巻数が多い順</option>
+      <option value="owned_count_desc">所持巻数が多い順</option>
     </select>
   </div>
   <div class="chips-scroll" id="filterChips">
     <button type="button" class="chip active" data-filter="all">すべて</button>
-    <button type="button" class="chip" data-filter="complete_started">完結・購入中（1巻〜）</button>
-    <button type="button" class="chip" data-filter="complete_all">完結（全作品）</button>
-    <button type="button" class="chip" data-filter="partial_missing">未所持あり（1巻〜所持）</button>
-    <button type="button" class="chip" data-filter="unstarted">未購入（1巻〜なし）</button>
+    <button type="button" class="chip" data-filter="complete_missing">完結（未所持あり）</button>
+    <button type="button" class="chip" data-filter="complete_all">完結</button>
+    <button type="button" class="chip" data-filter="ongoing_missing">未所持あり</button>
+    <button type="button" class="chip" data-filter="unstarted">未購入</button>
     <button type="button" class="chip" data-filter="ongoing">連載中</button>
-    <button type="button" class="chip" data-filter="uptodate">既刊まで所持</button>
     <button type="button" class="chip" data-filter="comp">コンプ</button>
+  </div>
+  <div class="chips-scroll" id="kanaChips" aria-label="頭文字絞り込み">
+    <button type="button" class="chip kana-chip active" data-kana="all">頭文字：すべて</button>
+    <button type="button" class="chip kana-chip" data-kana="a">あ</button>
+    <button type="button" class="chip kana-chip" data-kana="k">か</button>
+    <button type="button" class="chip kana-chip" data-kana="s">さ</button>
+    <button type="button" class="chip kana-chip" data-kana="t">た</button>
+    <button type="button" class="chip kana-chip" data-kana="n">な</button>
+    <button type="button" class="chip kana-chip" data-kana="h">は</button>
+    <button type="button" class="chip kana-chip" data-kana="m">ま</button>
+    <button type="button" class="chip kana-chip" data-kana="y">や</button>
+    <button type="button" class="chip kana-chip" data-kana="r">ら</button>
+    <button type="button" class="chip kana-chip" data-kana="w">わ</button>
   </div>
 </header>
 
@@ -754,13 +766,13 @@ body.modal-open {
   <div class="modal-sheet" style="height: 85dvh; border-top-left-radius: 20px; border-top-right-radius: 20px; border-top: 1px solid var(--border);">
     <div class="modal-header">
       <button type="button" class="icon-btn" id="closeBackupBtn">← 閉じる</button>
-      <div class="modal-header-title">データのバックアップ・復元</div>
+      <div class="modal-header-title">保存・復元</div>
       <div style="width: 60px;"></div>
     </div>
     <div class="modal-body">
       <div class="backup-box">
         <h3>📥 バックアップを保存（JSON）</h3>
-        <p>iPhoneやPCに現在の全データをファイルとして保存します。機種変更やブラウザデータ消去前に保存すると安心です。</p>
+        <p>現在の本棚データをファイルとして保存します。ブラウザの履歴やデータを消す前の控えとして使えます。</p>
         <button type="button" class="icon-btn primary" style="width:100%; height:42px;" id="exportJsonBtn">バックアップファイルをダウンロード</button>
       </div>
       <div class="backup-box">
@@ -779,18 +791,19 @@ body.modal-open {
 </div>
 
 <script>
+const MAX_VOL = 500;
 const INITIAL_BOOKS = [{"id": 1, "title": "ニセコイ", "yomi": "にせこい", "status": "完結", "latest": 25, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25]}, {"id": 2, "title": "約束のネバーランド", "yomi": "やくそくのねばーらんど", "status": "完結", "latest": 20, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]}, {"id": 3, "title": "暗殺教室", "yomi": "あんさつきょうしつ", "status": "完結", "latest": 21, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21]}, {"id": 4, "title": "鬼滅の刃", "yomi": "きめつのやいば", "status": "完結", "latest": 23, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]}, {"id": 5, "title": "呪術廻戦", "yomi": "じゅじゅつかいせん", "status": "完結", "latest": 30, "hasVol0": true, "vol0Owned": true, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]}, {"id": 6, "title": "WORLD TRIGGER", "yomi": "わーるどとりがー", "status": "連載中", "latest": 30, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30]}, {"id": 7, "title": "SPY×FAMILY", "yomi": "すぱいふぁみりー", "status": "連載中", "latest": 18, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]}, {"id": 8, "title": "東京喰種", "yomi": "とうきょうぐーる", "status": "完結", "latest": 14, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]}, {"id": 9, "title": "東京喰種：re", "yomi": "とうきょうぐーるあーるいー", "status": "完結", "latest": 16, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]}, {"id": 10, "title": "呪術廻戦モジュロ", "yomi": "じゅじゅつかいせんもじゅろ", "status": "完結", "latest": 3, "owned": []}, {"id": 11, "title": "かぐや様は告らせたい", "yomi": "かぐやさまはこくらせたい", "status": "完結", "latest": 27, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]}, {"id": 12, "title": "推しの子", "yomi": "おしのこ", "status": "完結", "latest": 16, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]}, {"id": 13, "title": "テラフォーマーズ", "yomi": "てらふぉーまーず", "status": "連載中", "latest": 24, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]}, {"id": 14, "title": "青のフラッグ", "yomi": "あおのふらっぐ", "status": "完結", "latest": 8, "owned": [1, 2, 3, 4, 5, 6, 7, 8]}, {"id": 15, "title": "阿波連さんははかれない", "yomi": "あはれんさんははかれない", "status": "完結", "latest": 17, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}, {"id": 16, "title": "FAIRYTAIL", "yomi": "ふぇありーている", "status": "完結", "latest": 63, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58]}, {"id": 17, "title": "進撃の巨人", "yomi": "しんげきのきょじん", "status": "完結", "latest": 34, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]}, {"id": 18, "title": "進撃の巨人 悔いなき選択", "yomi": "くいなきせんたく", "status": "完結", "latest": 2, "owned": [1, 2]}, {"id": 19, "title": "トモダチゲーム", "yomi": "ともだちげーむ", "status": "完結", "latest": 26, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]}, {"id": 20, "title": "山田くんと7人の魔女", "yomi": "やまだくんとななにんのまじょ", "status": "完結", "latest": 28, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28]}, {"id": 21, "title": "カッコウの許嫁", "yomi": "かっこうのいいなずけ", "status": "連載中", "latest": 34, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]}, {"id": 22, "title": "彼女、お借りします", "yomi": "かのじょおかりします", "status": "連載中", "latest": 48, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25]}, {"id": 23, "title": "五等分の花嫁", "yomi": "ごとうぶんのはなよめ", "status": "完結", "latest": 14, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]}, {"id": 24, "title": "東京リベンジャーズ", "yomi": "とうきょうりべんじゃーず", "status": "完結", "latest": 31, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]}, {"id": 25, "title": "寄宿学校のジュリエット", "yomi": "きしゅくがっこうのじゅりえっと", "status": "完結", "latest": 16, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]}, {"id": 26, "title": "ランウェイで笑って", "yomi": "らんうぇいでわらって", "status": "完結", "latest": 22, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]}, {"id": 27, "title": "食糧人間", "yomi": "しょくりょうにんげん", "status": "完結", "latest": 7, "owned": [1, 2, 3, 4, 5, 6, 7]}, {"id": 28, "title": "食糧人間", "yomi": "しょくりょうにんげんあーるいー", "status": "完結", "latest": 7, "owned": []}, {"id": 29, "title": "青のオーケストラ", "yomi": "あおのおーけすとら", "status": "連載中", "latest": 16, "owned": [1, 2, 3, 4, 5, 6, 7, 8]}, {"id": 30, "title": "プロミス・シンデレラ", "yomi": "ぷろみすしんでれら", "status": "完結", "latest": 16, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]}, {"id": 31, "title": "ダーウィンズゲーム", "yomi": "だーうぃんずげーむ", "status": "完結", "latest": 30, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]}, {"id": 32, "title": "じいさんばあさん若返る", "yomi": "じいさんばあさんわかがえる", "status": "完結", "latest": 8, "owned": [1, 2, 3, 4, 5, 6, 7, 8]}, {"id": 33, "title": "喰霊", "yomi": "がれい", "status": "完結", "latest": 12, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]}, {"id": 34, "title": "この美術部には問題がある", "yomi": "このびじゅつぶにはもんだいがある", "status": "連載中", "latest": 15, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]}, {"id": 35, "title": "坂本ですが？", "yomi": "さかもとですが", "status": "完結", "latest": 4, "owned": [1, 2, 3, 4]}, {"id": 36, "title": "三国志", "yomi": "さんごくし", "status": "完結", "latest": 60, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52]}, {"id": 37, "title": "赤髪の白雪姫", "yomi": "あかがみのしらゆきひめ", "status": "連載中", "latest": 27, "owned": []}, {"id": 38, "title": "俺だけレベルアップな件", "yomi": "おれだけ", "status": "完結", "latest": 25, "owned": []}, {"id": 39, "title": "可愛い上司を困らせたい", "yomi": "かわいいじょうし", "status": "完結", "latest": 8, "owned": []}, {"id": 40, "title": "キングダム", "yomi": "きんぐ", "status": "連載中", "latest": 81, "owned": []}, {"id": 41, "title": "恋と嘘", "yomi": "こいとうそ", "status": "完結", "latest": 13, "owned": []}, {"id": 42, "title": "サイコアイズ", "yomi": "さいこ", "status": "連載中", "latest": 8, "owned": []}, {"id": 43, "title": "SAKAMOTO DAYS", "yomi": "さかもと", "status": "連載中", "latest": 29, "owned": []}, {"id": 44, "title": "咲-Saki-", "yomi": "さき", "status": "連載中", "latest": 26, "owned": []}, {"id": 45, "title": "咲-Saki- 阿知賀編", "yomi": "さきあちが", "status": "連載中", "latest": 8, "owned": []}, {"id": 46, "title": "サマータイムレンダ", "yomi": "さまーたいむ", "status": "完結", "latest": 13, "owned": []}, {"id": 47, "title": "塩対応の佐藤さん", "yomi": "しおたいおう", "status": "連載中", "latest": 11, "owned": []}, {"id": 48, "title": "進撃!巨人中学校", "yomi": "しんげきちゅうがっこう", "status": "完結", "latest": 11, "owned": []}, {"id": 49, "title": "進撃の巨人 Before the fall", "yomi": "しんげきのきょじんびふぉー", "status": "完結", "latest": 17, "owned": []}, {"id": 50, "title": "城下町のダンデライオン", "yomi": "じょうかまち", "status": "連載中", "latest": 8, "owned": []}, {"id": 51, "title": "トリニティセブン", "yomi": "とりにてぃ", "status": "連載中", "latest": 35, "owned": []}, {"id": 52, "title": "ドラハチ", "yomi": "どらはち", "status": "連載中", "latest": 11, "owned": []}, {"id": 53, "title": "七つの大罪", "yomi": "ななつの", "status": "完結", "latest": 41, "owned": []}, {"id": 54, "title": "NARUTO", "yomi": "なると", "status": "完結", "latest": 72, "owned": []}, {"id": 55, "title": "日本三國", "yomi": "にっぽんさんごく", "status": "連載中", "latest": 7, "owned": []}, {"id": 56, "title": "氷菓", "yomi": "ひょうか", "status": "連載中", "latest": 17, "owned": []}, {"id": 57, "title": "FAIRYTAIL 100 YEARS QUEST", "yomi": "ふぇありーているひゃくねん", "status": "連載中", "latest": 23, "owned": []}, {"id": 58, "title": "BLODY MONDAY", "yomi": "ぶらっでぃ", "status": "完結", "latest": 11, "owned": []}, {"id": 59, "title": "BLODY MONDAY2", "yomi": "ぶらっでぃ2", "status": "完結", "latest": 8, "owned": []}, {"id": 60, "title": "BLODY MONDAY3", "yomi": "ぶらっでぃ3", "status": "完結", "latest": 4, "owned": []}, {"id": 61, "title": "宝石の国", "yomi": "ほうせき", "status": "完結", "latest": 13, "owned": []}, {"id": 62, "title": "僕だけがいない街", "yomi": "ぼくだけが", "status": "完結", "latest": 9, "owned": []}, {"id": 63, "title": "僕のヒーローアカデミア", "yomi": "ぼくのひーろー", "status": "完結", "latest": 42, "owned": []}, {"id": 64, "title": "マジカルパティシエ小咲ちゃん", "yomi": "まじかるぱて", "status": "完結", "latest": 4, "owned": []}, {"id": 65, "title": "名探偵コナン", "yomi": "めいたんていこなん", "status": "連載中", "latest": 110, "owned": []}, {"id": 66, "title": "山田くんとLv999の恋をする", "yomi": "やまだくんとれべ", "status": "連載中", "latest": 10, "owned": []}, {"id": 67, "title": "LV999の村人", "yomi": "れべる999", "status": "連載中", "latest": 21, "owned": []}, {"id": 68, "title": "ONE PIECE", "yomi": "わんぴーす", "status": "連載中", "latest": 115, "owned": []}];
-const STORAGE_KEY = "manga_shelf_v3_data";
+const STORAGE_KEY = "manga_shelf_v4_data";
 
 function normalizeBook(raw) {
-  const latest = Math.min(200, Math.max(0, Number(raw.latest) || 0));
+  const latest = Math.min(MAX_VOL, Math.max(0, Number(raw.latest) || 0));
   const owned = Array.isArray(raw.owned)
-    ? Array.from(new Set(raw.owned.map(Number).filter(v => Number.isInteger(v) && v >= 1 && v <= 200))).sort((a, b) => a - b)
+    ? Array.from(new Set(raw.owned.map(Number).filter(v => Number.isInteger(v) && v >= 1 && v <= MAX_VOL))).sort((a, b) => a - b)
     : [];
   const hasVol0 = Boolean(raw.hasVol0);
   const vol0Owned = hasVol0 ? Boolean(raw.vol0Owned) : false;
 
-  const spinoffTotal = Math.min(50, Math.max(0, Number(raw.spinoffTotal) || 0));
+  const spinoffTotal = Math.min(100, Math.max(0, Number(raw.spinoffTotal) || 0));
   const spinoffOwned = Array.isArray(raw.spinoffOwned)
     ? Array.from(new Set(raw.spinoffOwned.map(Number).filter(v => Number.isInteger(v) && v >= 1 && v <= spinoffTotal))).sort((a, b) => a - b)
     : [];
@@ -842,10 +855,42 @@ if (!Array.isArray(books) || books.length === 0) {
 }
 
 let currentFilter = "all";
+let currentKana = "all";
 let currentSort = "kana";
 let searchQuery = "";
 let editingBookId = null;
 let draftBook = null;
+
+function toHiraganaFirstChar(str) {
+  const s = (str || "").trim();
+  if (!s) return "";
+  const ch = s[0];
+  const code = ch.charCodeAt(0);
+  if (code >= 0x30A1 && code <= 0x30F6) {
+    return String.fromCharCode(code - 0x60);
+  }
+  return ch;
+}
+
+function matchesKanaGroup(book, group) {
+  if (!group || group === "all") return true;
+  const source = (book.yomi || book.title || "").trim();
+  const first = toHiraganaFirstChar(source);
+  const groups = {
+    a: ["あ", "い", "う", "え", "お", "ぁ", "ぃ", "ぅ", "ぇ", "ぉ"],
+    k: ["か", "き", "く", "け", "こ", "が", "ぎ", "ぐ", "げ", "ご"],
+    s: ["さ", "し", "す", "せ", "そ", "ざ", "じ", "ず", "ぜ", "ぞ"],
+    t: ["た", "ち", "つ", "て", "と", "だ", "ぢ", "づ", "で", "ど", "っ"],
+    n: ["な", "に", "ぬ", "ね", "の"],
+    h: ["は", "ひ", "ふ", "へ", "ほ", "ば", "び", "ぶ", "べ", "ぼ", "ぱ", "ぴ", "ぷ", "ぺ", "ぽ"],
+    m: ["ま", "み", "む", "め", "も"],
+    y: ["や", "ゆ", "よ", "ゃ", "ゅ", "ょ"],
+    r: ["ら", "り", "る", "れ", "ろ"],
+    w: ["わ", "を", "ん"]
+  };
+  const targets = groups[group] || [];
+  return targets.includes(first);
+}
 
 function autoSaveDraftIfExisting() {
   if (editingBookId !== null && draftBook) {
@@ -885,7 +930,7 @@ function formatMissingRanges(book) {
 
 function getMainOwnedCount(book) {
   if (!book.owned) return 0;
-  return book.owned.filter(v => v >= 1 && v <= 200).length;
+  return book.owned.filter(v => v >= 1 && v <= MAX_VOL).length;
 }
 
 function getVol0OwnedCount(book) {
@@ -929,21 +974,24 @@ function getFilteredAndSortedBooks() {
       const y = (book.yomi || "").toLowerCase();
       if (!t.includes(q) && !y.includes(q)) return false;
     }
+    if (!matchesKanaGroup(book, currentKana)) {
+      return false;
+    }
     const ownedCount = getMainOwnedCount(book);
+    const missingCount = Math.max(0, book.latest - ownedCount);
     const derived = getDerivedStatus(book);
+
     switch (currentFilter) {
-      case "complete_started":
-        return book.status === "完結" && ownedCount >= 1;
+      case "complete_missing":
+        return book.status === "完結" && missingCount > 0;
       case "complete_all":
         return book.status === "完結";
-      case "partial_missing":
-        return derived === "未所持あり";
+      case "ongoing_missing":
+        return book.status === "連載中" && missingCount > 0;
       case "unstarted":
         return ownedCount === 0 && book.latest > 0;
       case "ongoing":
         return book.status === "連載中";
-      case "uptodate":
-        return derived === "既刊まで所持";
       case "comp":
         return derived === "コンプ";
       default:
@@ -1107,7 +1155,7 @@ function openDetailModal(bookId) {
 }
 
 function applyRangeOwned(fromVol, toVol, shouldOwn) {
-  const maxV = Math.min(200, Math.max(0, Number(draftBook.latest) || 0));
+  const maxV = Math.min(MAX_VOL, Math.max(0, Number(draftBook.latest) || 0));
   let a = parseInt(fromVol, 10);
   let b = parseInt(toVol, 10);
   if (isNaN(a)) a = 1;
@@ -1141,7 +1189,7 @@ function renderDetailBody() {
   else if (derived === "未購入") derivedClass = "tag-owned-unstarted";
   else if (derived === "既刊まで所持") derivedClass = "tag-owned-uptodate";
 
-  const maxGridVol = Math.min(200, Math.max(0, Number(draftBook.latest) || 0));
+  const maxGridVol = Math.min(MAX_VOL, Math.max(0, Number(draftBook.latest) || 0));
   let tilesHtml = "";
   for (let v = 1; v <= maxGridVol; v++) {
     const isOwned = ownedSet.has(v);
@@ -1154,7 +1202,7 @@ function renderDetailBody() {
       <div class="extra-card">
         <div class="extra-card-head">
           <div>
-            <div class="extra-card-title">0巻（特別巻・プレリュード）</div>
+            <div class="extra-card-title">0巻</div>
             <div class="extra-card-sub">タップで所持/未所持を切替</div>
           </div>
           <button type="button" class="sub-action-btn danger-sm" id="removeVol0Btn">0巻を削除</button>
@@ -1170,7 +1218,7 @@ function renderDetailBody() {
         <div class="extra-card-head">
           <div>
             <div class="extra-card-title">0巻の追加</div>
-            <div class="extra-card-sub">0巻がある作品だけ手動で追加できます</div>
+            <div class="extra-card-sub">0巻がある作品だけ追加できます</div>
           </div>
           <button type="button" class="sub-action-btn purple" id="addVol0Btn">＋ 0巻を追加</button>
         </div>
@@ -1190,12 +1238,12 @@ function renderDetailBody() {
     <div class="extra-card">
       <div class="extra-card-head">
         <div>
-          <div class="extra-card-title">番外編（外伝・スピンオフ）</div>
-          <div class="extra-card-sub">番外編の巻数を設定すると各巻をタップで管理できます</div>
+          <div class="extra-card-title">番外編</div>
+          <div class="extra-card-sub">巻数を設定すると各巻をタップで管理できます</div>
         </div>
         <div class="stepper-wrap">
           <button type="button" class="stepper-btn" id="spinMinusBtn">－</button>
-          <input type="number" id="editSpinTotal" class="range-num" style="width:58px; height:40px;" min="0" max="50" value="${spinTotal}" />
+          <input type="number" id="editSpinTotal" class="range-num" style="width:58px; height:40px;" min="0" max="100" value="${spinTotal}" />
           <button type="button" class="stepper-btn" id="spinPlusBtn">＋</button>
         </div>
       </div>
@@ -1217,10 +1265,10 @@ function renderDetailBody() {
       </div>
       <div class="field-row">
         <div class="field-label-line">
-          <label class="field-label">読みがな（ひらがな・50音ソート用）</label>
+          <label class="field-label">読みがな</label>
           <button type="button" class="mini-action-btn" id="copyTitleToYomiBtn">タイトルをコピー</button>
         </div>
-        <input type="text" id="editYomi" class="text-input" value="${escapeHtml(draftBook.yomi)}" placeholder="例：じゅじゅつかいせん（英語はそのままでもOK）" />
+        <input type="text" id="editYomi" class="text-input" value="${escapeHtml(draftBook.yomi)}" placeholder="例：じゅじゅつかいせん" />
       </div>
       <div class="field-row-2col">
         <div class="field-row">
@@ -1231,10 +1279,10 @@ function renderDetailBody() {
           </select>
         </div>
         <div class="field-row">
-          <label class="field-label">既刊数（最大200巻）</label>
+          <label class="field-label">既刊数</label>
           <div class="stepper-wrap">
             <button type="button" class="stepper-btn" id="latestMinusBtn">－</button>
-            <input type="number" id="editLatest" class="text-input" min="0" max="200" value="${draftBook.latest}" style="text-align:center; font-weight:800;" />
+            <input type="number" id="editLatest" class="text-input" min="0" max="${MAX_VOL}" value="${draftBook.latest}" style="text-align:center; font-weight:800;" />
             <button type="button" class="stepper-btn" id="latestPlusBtn">＋</button>
           </div>
         </div>
@@ -1245,17 +1293,17 @@ function renderDetailBody() {
       <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px;">
         <div>
           <span class="tag ${derivedClass}">${escapeHtml(derived)}</span>
-          <strong style="margin-left:6px; font-size:15px;">本編：既刊${draftBook.latest}巻 / 所持${mainOwnedCount}巻</strong>
+          <strong style="margin-left:6px; font-size:15px;">既刊${draftBook.latest}巻 / 所持${mainOwnedCount}巻</strong>
         </div>
         <span style="font-size:12px; color:var(--text-sub); font-weight:700;">合計所持：${totalOwnedCount}冊</span>
       </div>
       ${missingText ? `<div class="book-missing-line" style="margin-top:8px;">未所持：${escapeHtml(missingText)}</div>` : ""}
       <div class="quick-btn-row">
         <button type="button" class="quick-btn all-on" id="ownAllBtn">既刊まで一括所持</button>
-        <button type="button" class="quick-btn all-off" id="clearAllBtn">すべて解除</button>
+        <button type="button" class="quick-btn all-off" id="clearAllBtn">すべて未所持</button>
       </div>
       <div class="batch-box">
-        <div class="batch-title">範囲指定でまとめて所持 / 解除</div>
+        <div class="batch-title">範囲指定でまとめて所持 / 未所持</div>
         <div class="range-inputs">
           <input type="number" id="rangeFrom" class="range-num" min="1" max="${Math.max(1, maxGridVol)}" value="1" />
           <span class="range-sep">巻 ～</span>
@@ -1263,15 +1311,14 @@ function renderDetailBody() {
           <span class="range-sep">巻</span>
         </div>
         <div class="quick-btn-row" style="margin-top:0;">
-          <button type="button" class="quick-btn all-on" id="applyRangeOnBtn">この範囲を所持にする</button>
-          <button type="button" class="quick-btn all-off" id="applyRangeOffBtn">この範囲を解除する</button>
+          <button type="button" class="quick-btn all-on" id="applyRangeOnBtn">所持</button>
+          <button type="button" class="quick-btn all-off" id="applyRangeOffBtn">未所持</button>
         </div>
       </div>
     </div>
 
     <div class="vol-section-header">
-      <span>各巻の所持状況（タップで即保存）</span>
-      <span>青＝所持 / 赤＝未所持</span>
+      <span>各巻の所持状況</span>
     </div>
     <div class="vol-grid" id="volGrid">${tilesHtml}</div>
 
@@ -1309,7 +1356,7 @@ function renderDetailBody() {
   document.getElementById("editLatest").addEventListener("change", e => {
     let val = parseInt(e.target.value, 10);
     if (isNaN(val) || val < 0) val = 0;
-    if (val > 200) val = 200;
+    if (val > MAX_VOL) val = MAX_VOL;
     draftBook.latest = val;
     autoSaveDraftIfExisting();
     renderDetailBody();
@@ -1322,7 +1369,7 @@ function renderDetailBody() {
   });
 
   document.getElementById("latestPlusBtn").addEventListener("click", () => {
-    draftBook.latest = Math.min(200, (Number(draftBook.latest) || 0) + 1);
+    draftBook.latest = Math.min(MAX_VOL, (Number(draftBook.latest) || 0) + 1);
     autoSaveDraftIfExisting();
     renderDetailBody();
   });
@@ -1401,7 +1448,7 @@ function renderDetailBody() {
   document.getElementById("editSpinTotal").addEventListener("change", e => {
     let val = parseInt(e.target.value, 10);
     if (isNaN(val) || val < 0) val = 0;
-    if (val > 50) val = 50;
+    if (val > 100) val = 100;
     draftBook.spinoffTotal = val;
     draftBook.spinoffOwned = (draftBook.spinoffOwned || []).filter(v => v <= val);
     autoSaveDraftIfExisting();
@@ -1417,7 +1464,7 @@ function renderDetailBody() {
   });
 
   document.getElementById("spinPlusBtn").addEventListener("click", () => {
-    const nextVal = Math.min(50, (Number(draftBook.spinoffTotal) || 0) + 1);
+    const nextVal = Math.min(100, (Number(draftBook.spinoffTotal) || 0) + 1);
     draftBook.spinoffTotal = nextVal;
     autoSaveDraftIfExisting();
     renderDetailBody();
@@ -1438,7 +1485,7 @@ function renderDetailBody() {
   const delBtn = document.getElementById("deleteBookBtn");
   if (delBtn) {
     delBtn.addEventListener("click", () => {
-      if (confirm(`「${draftBook.title}」を削除しますか？`)) {
+      if (confirm(`本当に「${draftBook.title}」を本棚から削除しますか？`)) {
         books = books.filter(b => b.id !== editingBookId);
         saveBooks(books);
         closeDetailModal();
@@ -1483,7 +1530,7 @@ document.getElementById("saveDetailBtn").addEventListener("click", () => {
   renderList();
 });
 
-// Search, Sort, Filter events
+// Search, Sort, Filter, Kana events
 const searchInput = document.getElementById("searchInput");
 const searchClearBtn = document.getElementById("searchClearBtn");
 searchInput.addEventListener("input", () => {
@@ -1506,6 +1553,14 @@ document.getElementById("filterChips").querySelectorAll(".chip").forEach(chip =>
     document.getElementById("filterChips").querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
     chip.classList.add("active");
     currentFilter = chip.getAttribute("data-filter");
+    renderList();
+  });
+});
+document.getElementById("kanaChips").querySelectorAll(".kana-chip").forEach(chip => {
+  chip.addEventListener("click", () => {
+    document.getElementById("kanaChips").querySelectorAll(".kana-chip").forEach(c => c.classList.remove("active"));
+    chip.classList.add("active");
+    currentKana = chip.getAttribute("data-kana");
     renderList();
   });
 });
