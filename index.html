@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black" />
 <meta name="apple-mobile-web-app-title" content="漫画本棚" />
 <meta name="theme-color" content="#0F1115" />
-<title>漫画本棚 - コレクション管理</title>
+<title>漫画本棚</title>
 <style>
 :root {
   --bg: #0f1115;
@@ -309,10 +309,21 @@ body.modal-open {
   line-height: 1.35;
   word-break: break-word;
 }
+.book-pub-line {
+  font-size: 12px;
+  color: var(--text-sub);
+  margin-bottom: 4px;
+  word-break: break-word;
+}
 .book-counts {
   font-size: 13px;
   color: var(--text-sub);
   font-weight: 600;
+}
+.book-rem-inline {
+  margin-left: 6px;
+  color: var(--red-text);
+  font-weight: 800;
 }
 .book-missing-line {
   margin-top: 5px;
@@ -688,7 +699,7 @@ body.modal-open {
 <header class="app-header">
   <div class="header-top">
     <div class="app-title">
-      <span>📚 本棚</span>
+      <span>📚 漫画本棚</span>
       <span class="app-title-badge" id="totalCountBadge">0作品</span>
     </div>
     <div class="header-actions">
@@ -698,7 +709,7 @@ body.modal-open {
   </div>
   <div class="search-wrap">
     <span class="search-icon">🔍</span>
-    <input type="search" id="searchInput" class="search-input" placeholder="タイトル・読みがなで検索..." autocomplete="off" />
+    <input type="search" id="searchInput" class="search-input" placeholder="タイトル・読みがな・出版社・雑誌で検索..." autocomplete="off" />
     <button type="button" id="searchClearBtn" class="search-clear">✕</button>
   </div>
   <div class="control-row">
@@ -775,9 +786,9 @@ body.modal-open {
         <button type="button" class="icon-btn" style="width:100%; height:42px;" id="importJsonBtn">ファイルを選択して復元</button>
       </div>
       <div class="backup-box">
-        <h3>🔄 初期データ（68作品）に戻す</h3>
-        <p>最初に読み込んだ68作品の状態にリセットします。</p>
-        <button type="button" class="danger-btn" style="margin-top:4px;" id="resetInitialBtn">初期68作品にリセット</button>
+        <h3>🔄 初期データ（69作品）に戻す</h3>
+        <p>最初に読み込んだ69作品の状態にリセットします。</p>
+        <button type="button" class="danger-btn" style="margin-top:4px;" id="resetInitialBtn">初期69作品にリセット</button>
       </div>
     </div>
   </div>
@@ -785,7 +796,7 @@ body.modal-open {
 
 <script>
 const MAX_VOL = 500;
-const INITIAL_BOOKS = [{"id": 1, "title": "ニセコイ", "yomi": "にせこい", "status": "完結", "latest": 25, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25]}, {"id": 2, "title": "約束のネバーランド", "yomi": "やくそくのねばーらんど", "status": "完結", "latest": 20, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]}, {"id": 3, "title": "暗殺教室", "yomi": "あんさつきょうしつ", "status": "完結", "latest": 21, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21]}, {"id": 4, "title": "鬼滅の刃", "yomi": "きめつのやいば", "status": "完結", "latest": 23, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]}, {"id": 5, "title": "呪術廻戦", "yomi": "じゅじゅつかいせん", "status": "完結", "latest": 30, "hasVol0": true, "vol0Owned": true, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]}, {"id": 6, "title": "WORLD TRIGGER", "yomi": "わーるどとりがー", "status": "連載中", "latest": 30, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30]}, {"id": 7, "title": "SPY×FAMILY", "yomi": "すぱいふぁみりー", "status": "連載中", "latest": 18, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]}, {"id": 8, "title": "東京喰種", "yomi": "とうきょうぐーる", "status": "完結", "latest": 14, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]}, {"id": 9, "title": "東京喰種：re", "yomi": "とうきょうぐーるあーるいー", "status": "完結", "latest": 16, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]}, {"id": 10, "title": "呪術廻戦モジュロ", "yomi": "じゅじゅつかいせんもじゅろ", "status": "完結", "latest": 3, "owned": []}, {"id": 11, "title": "かぐや様は告らせたい", "yomi": "かぐやさまはこくらせたい", "status": "完結", "latest": 27, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]}, {"id": 12, "title": "推しの子", "yomi": "おしのこ", "status": "完結", "latest": 16, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]}, {"id": 13, "title": "テラフォーマーズ", "yomi": "てらふぉーまーず", "status": "連載中", "latest": 24, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]}, {"id": 14, "title": "青のフラッグ", "yomi": "あおのふらっぐ", "status": "完結", "latest": 8, "owned": [1, 2, 3, 4, 5, 6, 7, 8]}, {"id": 15, "title": "阿波連さんははかれない", "yomi": "あはれんさんははかれない", "status": "完結", "latest": 17, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}, {"id": 16, "title": "FAIRYTAIL", "yomi": "ふぇありーている", "status": "完結", "latest": 63, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58]}, {"id": 17, "title": "進撃の巨人", "yomi": "しんげきのきょじん", "status": "完結", "latest": 34, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]}, {"id": 18, "title": "進撃の巨人 悔いなき選択", "yomi": "くいなきせんたく", "status": "完結", "latest": 2, "owned": [1, 2]}, {"id": 19, "title": "トモダチゲーム", "yomi": "ともだちげーむ", "status": "完結", "latest": 26, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]}, {"id": 20, "title": "山田くんと7人の魔女", "yomi": "やまだくんとななにんのまじょ", "status": "完結", "latest": 28, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28]}, {"id": 21, "title": "カッコウの許嫁", "yomi": "かっこうのいいなずけ", "status": "連載中", "latest": 34, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]}, {"id": 22, "title": "彼女、お借りします", "yomi": "かのじょおかりします", "status": "連載中", "latest": 48, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25]}, {"id": 23, "title": "五等分の花嫁", "yomi": "ごとうぶんのはなよめ", "status": "完結", "latest": 14, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]}, {"id": 24, "title": "東京リベンジャーズ", "yomi": "とうきょうりべんじゃーず", "status": "完結", "latest": 31, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]}, {"id": 25, "title": "寄宿学校のジュリエット", "yomi": "きしゅくがっこうのじゅりえっと", "status": "完結", "latest": 16, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]}, {"id": 26, "title": "ランウェイで笑って", "yomi": "らんうぇいでわらって", "status": "完結", "latest": 22, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]}, {"id": 27, "title": "食糧人間", "yomi": "しょくりょうにんげん", "status": "完結", "latest": 7, "owned": [1, 2, 3, 4, 5, 6, 7]}, {"id": 28, "title": "食糧人間", "yomi": "しょくりょうにんげんあーるいー", "status": "完結", "latest": 7, "owned": []}, {"id": 29, "title": "青のオーケストラ", "yomi": "あおのおーけすとら", "status": "連載中", "latest": 16, "owned": [1, 2, 3, 4, 5, 6, 7, 8]}, {"id": 30, "title": "プロミス・シンデレラ", "yomi": "ぷろみすしんでれら", "status": "完結", "latest": 16, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]}, {"id": 31, "title": "ダーウィンズゲーム", "yomi": "だーうぃんずげーむ", "status": "完結", "latest": 30, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]}, {"id": 32, "title": "じいさんばあさん若返る", "yomi": "じいさんばあさんわかがえる", "status": "完結", "latest": 8, "owned": [1, 2, 3, 4, 5, 6, 7, 8]}, {"id": 33, "title": "喰霊", "yomi": "がれい", "status": "完結", "latest": 12, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]}, {"id": 34, "title": "この美術部には問題がある", "yomi": "このびじゅつぶにはもんだいがある", "status": "連載中", "latest": 15, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]}, {"id": 35, "title": "坂本ですが？", "yomi": "さかもとですが", "status": "完結", "latest": 4, "owned": [1, 2, 3, 4]}, {"id": 36, "title": "三国志", "yomi": "さんごくし", "status": "完結", "latest": 60, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52]}, {"id": 37, "title": "赤髪の白雪姫", "yomi": "あかがみのしらゆきひめ", "status": "連載中", "latest": 27, "owned": []}, {"id": 38, "title": "俺だけレベルアップな件", "yomi": "おれだけ", "status": "完結", "latest": 25, "owned": []}, {"id": 39, "title": "可愛い上司を困らせたい", "yomi": "かわいいじょうし", "status": "完結", "latest": 8, "owned": []}, {"id": 40, "title": "キングダム", "yomi": "きんぐ", "status": "連載中", "latest": 81, "owned": []}, {"id": 41, "title": "恋と嘘", "yomi": "こいとうそ", "status": "完結", "latest": 13, "owned": []}, {"id": 42, "title": "サイコアイズ", "yomi": "さいこ", "status": "連載中", "latest": 8, "owned": []}, {"id": 43, "title": "SAKAMOTO DAYS", "yomi": "さかもと", "status": "連載中", "latest": 29, "owned": []}, {"id": 44, "title": "咲-Saki-", "yomi": "さき", "status": "連載中", "latest": 26, "owned": []}, {"id": 45, "title": "咲-Saki- 阿知賀編", "yomi": "さきあちが", "status": "連載中", "latest": 8, "owned": []}, {"id": 46, "title": "サマータイムレンダ", "yomi": "さまーたいむ", "status": "完結", "latest": 13, "owned": []}, {"id": 47, "title": "塩対応の佐藤さん", "yomi": "しおたいおう", "status": "連載中", "latest": 11, "owned": []}, {"id": 48, "title": "進撃!巨人中学校", "yomi": "しんげきちゅうがっこう", "status": "完結", "latest": 11, "owned": []}, {"id": 49, "title": "進撃の巨人 Before the fall", "yomi": "しんげきのきょじんびふぉー", "status": "完結", "latest": 17, "owned": []}, {"id": 50, "title": "城下町のダンデライオン", "yomi": "じょうかまち", "status": "連載中", "latest": 8, "owned": []}, {"id": 51, "title": "トリニティセブン", "yomi": "とりにてぃ", "status": "連載中", "latest": 35, "owned": []}, {"id": 52, "title": "ドラハチ", "yomi": "どらはち", "status": "連載中", "latest": 11, "owned": []}, {"id": 53, "title": "七つの大罪", "yomi": "ななつの", "status": "完結", "latest": 41, "owned": []}, {"id": 54, "title": "NARUTO", "yomi": "なると", "status": "完結", "latest": 72, "owned": []}, {"id": 55, "title": "日本三國", "yomi": "にっぽんさんごく", "status": "連載中", "latest": 7, "owned": []}, {"id": 56, "title": "氷菓", "yomi": "ひょうか", "status": "連載中", "latest": 17, "owned": []}, {"id": 57, "title": "FAIRYTAIL 100 YEARS QUEST", "yomi": "ふぇありーているひゃくねん", "status": "連載中", "latest": 23, "owned": []}, {"id": 58, "title": "BLODY MONDAY", "yomi": "ぶらっでぃ", "status": "完結", "latest": 11, "owned": []}, {"id": 59, "title": "BLODY MONDAY2", "yomi": "ぶらっでぃ2", "status": "完結", "latest": 8, "owned": []}, {"id": 60, "title": "BLODY MONDAY3", "yomi": "ぶらっでぃ3", "status": "完結", "latest": 4, "owned": []}, {"id": 61, "title": "宝石の国", "yomi": "ほうせき", "status": "完結", "latest": 13, "owned": []}, {"id": 62, "title": "僕だけがいない街", "yomi": "ぼくだけが", "status": "完結", "latest": 9, "owned": []}, {"id": 63, "title": "僕のヒーローアカデミア", "yomi": "ぼくのひーろー", "status": "完結", "latest": 42, "owned": []}, {"id": 64, "title": "マジカルパティシエ小咲ちゃん", "yomi": "まじかるぱて", "status": "完結", "latest": 4, "owned": []}, {"id": 65, "title": "名探偵コナン", "yomi": "めいたんていこなん", "status": "連載中", "latest": 110, "owned": []}, {"id": 66, "title": "山田くんとLv999の恋をする", "yomi": "やまだくんとれべ", "status": "連載中", "latest": 10, "owned": []}, {"id": 67, "title": "LV999の村人", "yomi": "れべる999", "status": "連載中", "latest": 21, "owned": []}, {"id": 68, "title": "ONE PIECE", "yomi": "わんぴーす", "status": "連載中", "latest": 115, "owned": []}];
+const INITIAL_BOOKS = [{"id": 1, "title": "ニセコイ", "yomi": "にせこい", "status": "完結", "latest": 25, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 2, "title": "約束のネバーランド", "yomi": "やくそくのねばーらんど", "status": "完結", "latest": 20, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 3, "title": "暗殺教室", "yomi": "あんさつきょうしつ", "status": "完結", "latest": 21, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 4, "title": "鬼滅の刃", "yomi": "きめつのやいば", "status": "完結", "latest": 23, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 5, "title": "呪術廻戦", "yomi": "じゅじゅつかいせん", "status": "完結", "latest": 30, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26], "hasVol0": true, "vol0Owned": true, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 6, "title": "WORLD TRIGGER", "yomi": "わーるどとりがー", "status": "連載中", "latest": 30, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 7, "title": "SPY×FAMILY", "yomi": "すぱいふぁみりー", "status": "連載中", "latest": 18, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 8, "title": "東京喰種", "yomi": "とうきょうぐーる", "status": "完結", "latest": 14, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 9, "title": "東京喰種：re", "yomi": "とうきょうぐーるあーるいー", "status": "完結", "latest": 16, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 10, "title": "呪術廻戦モジュロ", "yomi": "じゅじゅつかいせんもじゅろ", "status": "完結", "latest": 3, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 11, "title": "かぐや様は告らせたい", "yomi": "かぐやさまはこくらせたい", "status": "完結", "latest": 27, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 12, "title": "推しの子", "yomi": "おしのこ", "status": "完結", "latest": 16, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 13, "title": "テラフォーマーズ", "yomi": "てらふぉーまーず", "status": "連載中", "latest": 24, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 14, "title": "青のフラッグ", "yomi": "あおのふらっぐ", "status": "完結", "latest": 8, "owned": [1, 2, 3, 4, 5, 6, 7, 8], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 15, "title": "阿波連さんははかれない", "yomi": "あはれんさんははかれない", "status": "完結", "latest": 17, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 16, "title": "FAIRYTAIL", "yomi": "ふぇありーている", "status": "完結", "latest": 63, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 17, "title": "進撃の巨人", "yomi": "しんげきのきょじん", "status": "完結", "latest": 34, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 18, "title": "進撃の巨人 悔いなき選択", "yomi": "くいなきせんたく", "status": "完結", "latest": 2, "owned": [1, 2], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 19, "title": "トモダチゲーム", "yomi": "ともだちげーむ", "status": "完結", "latest": 26, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 20, "title": "山田くんと7人の魔女", "yomi": "やまだくんとななにんのまじょ", "status": "完結", "latest": 28, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 21, "title": "カッコウの許嫁", "yomi": "かっこうのいいなずけ", "status": "連載中", "latest": 34, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 22, "title": "彼女、お借りします", "yomi": "かのじょおかりします", "status": "連載中", "latest": 48, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 23, "title": "五等分の花嫁", "yomi": "ごとうぶんのはなよめ", "status": "完結", "latest": 14, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 24, "title": "東京リベンジャーズ", "yomi": "とうきょうりべんじゃーず", "status": "完結", "latest": 31, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 25, "title": "寄宿学校のジュリエット", "yomi": "きしゅくがっこうのじゅりえっと", "status": "完結", "latest": 16, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 26, "title": "ランウェイで笑って", "yomi": "らんうぇいでわらって", "status": "完結", "latest": 22, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 27, "title": "食糧人間", "yomi": "しょくりょうにんげん", "status": "完結", "latest": 7, "owned": [1, 2, 3, 4, 5, 6, 7], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 28, "title": "食糧人間", "yomi": "しょくりょうにんげんあーるいー", "status": "完結", "latest": 7, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 29, "title": "青のオーケストラ", "yomi": "あおのおーけすとら", "status": "連載中", "latest": 16, "owned": [1, 2, 3, 4, 5, 6, 7, 8], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 30, "title": "プロミス・シンデレラ", "yomi": "ぷろみすしんでれら", "status": "完結", "latest": 16, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 31, "title": "ダーウィンズゲーム", "yomi": "だーうぃんずげーむ", "status": "完結", "latest": 30, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 32, "title": "じいさんばあさん若返る", "yomi": "じいさんばあさんわかがえる", "status": "完結", "latest": 8, "owned": [1, 2, 3, 4, 5, 6, 7, 8], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 33, "title": "喰霊", "yomi": "がれい", "status": "完結", "latest": 12, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 34, "title": "この美術部には問題がある", "yomi": "このびじゅつぶにはもんだいがある", "status": "連載中", "latest": 15, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 35, "title": "坂本ですが？", "yomi": "さかもとですが", "status": "完結", "latest": 4, "owned": [1, 2, 3, 4], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 36, "title": "三国志", "yomi": "さんごくし", "status": "完結", "latest": 60, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 37, "title": "赤髪の白雪姫", "yomi": "あかがみのしらゆきひめ", "status": "連載中", "latest": 27, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 38, "title": "俺だけレベルアップな件", "yomi": "おれだけれべるあっぷなけん", "status": "完結", "latest": 25, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 39, "title": "可愛い上司を困らせたい", "yomi": "かわいいじょうし", "status": "完結", "latest": 8, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 40, "title": "キングダム", "yomi": "きんぐ", "status": "連載中", "latest": 81, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 41, "title": "恋と嘘", "yomi": "こいとうそ", "status": "完結", "latest": 13, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 42, "title": "サイコアイズ", "yomi": "さいこ", "status": "連載中", "latest": 8, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 43, "title": "SAKAMOTO DAYS", "yomi": "さかもと", "status": "連載中", "latest": 29, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 44, "title": "咲-Saki-", "yomi": "さき", "status": "連載中", "latest": 26, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 45, "title": "咲-Saki- 阿知賀編", "yomi": "さきあちが", "status": "連載中", "latest": 8, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 46, "title": "サマータイムレンダ", "yomi": "さまーたいむ", "status": "完結", "latest": 13, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 47, "title": "塩対応の佐藤さん", "yomi": "しおたいおう", "status": "連載中", "latest": 11, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 48, "title": "進撃!巨人中学校", "yomi": "しんげきちゅうがっこう", "status": "完結", "latest": 11, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 49, "title": "進撃の巨人 Before the fall", "yomi": "しんげきのきょじんびふぉー", "status": "完結", "latest": 17, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 50, "title": "城下町のダンデライオン", "yomi": "じょうかまち", "status": "連載中", "latest": 8, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 51, "title": "トリニティセブン", "yomi": "とりにてぃ", "status": "連載中", "latest": 35, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 52, "title": "ドラハチ", "yomi": "どらはち", "status": "連載中", "latest": 11, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 53, "title": "七つの大罪", "yomi": "ななつの", "status": "完結", "latest": 41, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 54, "title": "NARUTO", "yomi": "なると", "status": "完結", "latest": 72, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 55, "title": "日本三國", "yomi": "にっぽんさんごく", "status": "連載中", "latest": 7, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 56, "title": "氷菓", "yomi": "ひょうか", "status": "連載中", "latest": 17, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 57, "title": "FAIRYTAIL 100 YEARS QUEST", "yomi": "ふぇありーているひゃくねん", "status": "連載中", "latest": 23, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 58, "title": "BLODY MONDAY", "yomi": "ぶらっでぃ", "status": "完結", "latest": 11, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 59, "title": "BLODY MONDAY2", "yomi": "ぶらっでぃ2", "status": "完結", "latest": 8, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 60, "title": "BLODY MONDAY3", "yomi": "ぶらっでぃ3", "status": "完結", "latest": 4, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 61, "title": "宝石の国", "yomi": "ほうせき", "status": "完結", "latest": 13, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 62, "title": "僕だけがいない街", "yomi": "ぼくだけが", "status": "完結", "latest": 9, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 63, "title": "僕のヒーローアカデミア", "yomi": "ぼくのひーろー", "status": "完結", "latest": 42, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 64, "title": "マジカルパティシエ小咲ちゃん", "yomi": "まじかるぱて", "status": "完結", "latest": 4, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 65, "title": "名探偵コナン", "yomi": "めいたんていこなん", "status": "連載中", "latest": 110, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 66, "title": "山田くんとLv999の恋をする", "yomi": "やまだくんとれべ", "status": "連載中", "latest": 10, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 67, "title": "LV999の村人", "yomi": "れべる999", "status": "連載中", "latest": 21, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 68, "title": "ONE PIECE", "yomi": "わんぴーす", "status": "連載中", "latest": 115, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 69, "title": "テスト", "yomi": "てすと", "status": "連載中", "latest": 20, "owned": [1, 2, 3, 4, 5], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}];
 const STORAGE_KEY = "manga_shelf_v4_data";
 
 function normalizeBook(raw) {
@@ -805,6 +816,8 @@ function normalizeBook(raw) {
     id: Number(raw.id) || 1,
     title: String(raw.title || ""),
     yomi: String(raw.yomi || ""),
+    publisher: String(raw.publisher || ""),
+    magazine: String(raw.magazine || ""),
     status: raw.status === "完結" ? "完結" : "連載中",
     latest,
     owned,
@@ -926,6 +939,10 @@ function getMainOwnedCount(book) {
   return book.owned.filter(v => v >= 1 && v <= MAX_VOL).length;
 }
 
+function getMissingMainCount(book) {
+  return Math.max(0, (Number(book.latest) || 0) - getMainOwnedCount(book));
+}
+
 function getVol0OwnedCount(book) {
   return (book.hasVol0 && book.vol0Owned) ? 1 : 0;
 }
@@ -946,7 +963,7 @@ function hasAnyOwnedTitle(book) {
 
 function getDerivedStatus(book) {
   const ownedCount = getMainOwnedCount(book);
-  const missingCount = Math.max(0, book.latest - ownedCount);
+  const missingCount = getMissingMainCount(book);
   if (missingCount > 0) {
     return ownedCount > 0 ? "未所持あり" : "未購入";
   }
@@ -965,13 +982,15 @@ function getFilteredAndSortedBooks() {
     if (q) {
       const t = (book.title || "").toLowerCase();
       const y = (book.yomi || "").toLowerCase();
-      if (!t.includes(q) && !y.includes(q)) return false;
+      const p = (book.publisher || "").toLowerCase();
+      const m = (book.magazine || "").toLowerCase();
+      if (!t.includes(q) && !y.includes(q) && !p.includes(q) && !m.includes(q)) return false;
     }
     if (!matchesKanaGroup(book, currentKana)) {
       return false;
     }
     const ownedCount = getMainOwnedCount(book);
-    const missingCount = Math.max(0, book.latest - ownedCount);
+    const missingCount = getMissingMainCount(book);
     const derived = getDerivedStatus(book);
 
     switch (currentFilter) {
@@ -995,8 +1014,8 @@ function getFilteredAndSortedBooks() {
   list.sort((a, b) => {
     const oa = getMainOwnedCount(a);
     const ob = getMainOwnedCount(b);
-    const ma = Math.max(0, a.latest - oa);
-    const mb = Math.max(0, b.latest - ob);
+    const ma = getMissingMainCount(a);
+    const mb = getMissingMainCount(b);
     if (currentSort === "kana") {
       return compareKana(a, b);
     }
@@ -1049,6 +1068,13 @@ function escapeHtml(str) {
     .replace(/"/g, "&quot;");
 }
 
+function formatPubMag(book) {
+  const parts = [];
+  if (book.publisher) parts.push(book.publisher);
+  if (book.magazine) parts.push(book.magazine);
+  return parts.join(" / ");
+}
+
 function renderList() {
   const list = getFilteredAndSortedBooks();
   const container = document.getElementById("bookList");
@@ -1068,10 +1094,12 @@ function renderList() {
 
   container.innerHTML = list.map(book => {
     const mainOwned = getMainOwnedCount(book);
+    const missingCount = getMissingMainCount(book);
     const spinTotal = Number(book.spinoffTotal) || 0;
     const spinOwned = getSpinoffOwnedCount(book);
     const derived = getDerivedStatus(book);
     const missingText = formatMissingRanges(book);
+    const pubMagText = formatPubMag(book);
     const statusTagClass = book.status === "完結" ? "tag-status-end" : "tag-status-on";
 
     const showDerivedBadge = derived === "未購入" || derived === "コンプ" || derived === "既刊まで所持";
@@ -1087,6 +1115,12 @@ function renderList() {
       : "";
     const spinBadge = spinTotal > 0
       ? `<span class="tag tag-spin">番外編 ${spinOwned}/${spinTotal}</span>`
+      : "";
+    const pubLine = pubMagText
+      ? `<div class="book-pub-line">${escapeHtml(pubMagText)}</div>`
+      : "";
+    const remInline = missingCount > 0
+      ? `<span class="book-rem-inline">あと${missingCount}冊</span>`
       : "";
     const missingLine = missingText
       ? `<div class="book-missing-line">未所持：${escapeHtml(missingText)}</div>`
@@ -1106,7 +1140,8 @@ function renderList() {
             ${spinBadge}
           </div>
           <div class="book-title">${escapeHtml(book.title)}</div>
-          <div class="book-counts">既刊${book.latest}巻 / 所持${mainOwned}巻${extraCountNote}</div>
+          ${pubLine}
+          <div class="book-counts">既刊${book.latest}巻 / 所持${mainOwned}巻${extraCountNote}${remInline}</div>
           ${missingLine}
         </div>
         <div class="book-chevron">›</div>
@@ -1130,6 +1165,8 @@ function openDetailModal(bookId) {
       id: maxId + 1,
       title: "",
       yomi: "",
+      publisher: "",
+      magazine: "",
       status: "連載中",
       latest: 1,
       owned: [],
@@ -1177,6 +1214,7 @@ function renderDetailBody() {
   const prevScroll = body.scrollTop;
   const ownedSet = new Set(draftBook.owned || []);
   const mainOwnedCount = getMainOwnedCount(draftBook);
+  const missingCount = getMissingMainCount(draftBook);
   const totalOwnedCount = getTotalOwnedCount(draftBook);
   const derived = getDerivedStatus(draftBook);
   const missingText = formatMissingRanges(draftBook);
@@ -1272,6 +1310,16 @@ function renderDetailBody() {
       </div>
       <div class="field-row-2col">
         <div class="field-row">
+          <label class="field-label">出版社</label>
+          <input type="text" id="editPublisher" class="text-input" value="${escapeHtml(draftBook.publisher)}" placeholder="例：集英社、講談社" />
+        </div>
+        <div class="field-row">
+          <label class="field-label">雑誌・レーベル</label>
+          <input type="text" id="editMagazine" class="text-input" value="${escapeHtml(draftBook.magazine)}" placeholder="例：ジャンプ、マガジン" />
+        </div>
+      </div>
+      <div class="field-row-2col">
+        <div class="field-row">
           <label class="field-label">状態</label>
           <select id="editStatus" class="text-input" style="height:42px;">
             <option value="連載中" ${draftBook.status === "連載中" ? "selected" : ""}>連載中</option>
@@ -1294,6 +1342,7 @@ function renderDetailBody() {
         <div>
           ${derivedBadge}
           <strong style="${showDerivedBadge ? "margin-left:6px;" : ""} font-size:15px;">既刊${draftBook.latest}巻 / 所持${mainOwnedCount}巻</strong>
+          ${missingCount > 0 ? `<span class="book-rem-inline">あと${missingCount}冊</span>` : ""}
         </div>
         <span style="font-size:12px; color:var(--text-sub); font-weight:700;">合計所持：${totalOwnedCount}冊</span>
       </div>
@@ -1344,6 +1393,16 @@ function renderDetailBody() {
 
   document.getElementById("editYomi").addEventListener("input", e => {
     draftBook.yomi = e.target.value;
+    autoSaveDraftIfExisting();
+  });
+
+  document.getElementById("editPublisher").addEventListener("input", e => {
+    draftBook.publisher = e.target.value;
+    autoSaveDraftIfExisting();
+  });
+
+  document.getElementById("editMagazine").addEventListener("input", e => {
+    draftBook.magazine = e.target.value;
     autoSaveDraftIfExisting();
   });
 
@@ -1517,7 +1576,9 @@ document.getElementById("saveDetailBtn").addEventListener("click", () => {
   draftBook = normalizeBook({
     ...draftBook,
     title: draftBook.title.trim(),
-    yomi: (draftBook.yomi || "").trim()
+    yomi: (draftBook.yomi || "").trim(),
+    publisher: (draftBook.publisher || "").trim(),
+    magazine: (draftBook.magazine || "").trim()
   });
   if (editingBookId === null) {
     books.push(draftBook);
@@ -1623,7 +1684,7 @@ document.getElementById("importJsonInput").addEventListener("change", e => {
   e.target.value = "";
 });
 document.getElementById("resetInitialBtn").addEventListener("click", () => {
-  if (confirm("現在のデータを消去して、最初の68作品データに戻しますか？")) {
+  if (confirm("現在のデータを消去して、最初の69作品データに戻しますか？")) {
     books = cloneInitialBooks();
     saveBooks(books);
     renderList();
