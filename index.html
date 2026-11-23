@@ -54,9 +54,16 @@ body.modal-open {
   overflow: hidden;
 }
 
-/* Header (scrolls naturally with page) */
+/* Sticky Top Group (Header + Summary Bar stay pinned together) */
+.sticky-top-group {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: #0f1115;
+}
+
+/* Header */
 .app-header {
-  position: static;
   background: #0f1115;
   border-bottom: 1px solid var(--border);
   padding: calc(10px + var(--safe-top)) 14px 10px;
@@ -230,17 +237,13 @@ body.modal-open {
   color: #fff;
 }
 
-/* Sticky Summary Strip (sticks to top when scrolled past header) */
+/* Summary Strip */
 .summary-bar {
-  position: sticky;
-  top: 0;
-  z-index: 30;
   padding: 8px 14px;
   font-size: 12px;
   color: var(--text-sub);
   border-bottom: 1px solid var(--border);
-  background: rgba(19, 22, 28, 0.96);
-  backdrop-filter: blur(8px);
+  background: #13161c;
 }
 .summary-row {
   display: flex;
@@ -747,69 +750,71 @@ body.modal-open {
 </style>
 </head>
 <body>
-<header class="app-header">
-  <div class="header-top">
-    <div class="app-title">
-      <span>📚 漫画本棚</span>
-      <span class="app-title-badge" id="totalCountBadge">0作品</span>
+<div class="sticky-top-group" id="stickyTopGroup">
+  <header class="app-header">
+    <div class="header-top">
+      <div class="app-title">
+        <span>📚 漫画本棚</span>
+        <span class="app-title-badge" id="totalCountBadge">0作品</span>
+      </div>
+      <div class="header-actions">
+        <button type="button" class="icon-btn" id="openBackupBtn" title="保存・復元">⚙ 保存/復元</button>
+        <button type="button" class="icon-btn primary" id="addBookBtn">＋ 追加</button>
+      </div>
     </div>
-    <div class="header-actions">
-      <button type="button" class="icon-btn" id="openBackupBtn" title="保存・復元">⚙ 保存/復元</button>
-      <button type="button" class="icon-btn primary" id="addBookBtn">＋ 追加</button>
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="search" id="searchInput" class="search-input" placeholder="" autocomplete="off" />
+      <button type="button" id="searchClearBtn" class="search-clear">✕</button>
     </div>
-  </div>
-  <div class="search-wrap">
-    <span class="search-icon">🔍</span>
-    <input type="search" id="searchInput" class="search-input" placeholder="" autocomplete="off" />
-    <button type="button" id="searchClearBtn" class="search-clear">✕</button>
-  </div>
-  <div class="control-row">
-    <select id="sortSelect" class="select-box" aria-label="並び替え">
-      <option value="kana">50音順</option>
-      <option value="complete_owned_first">完結（1巻以上所持を優先）</option>
-      <option value="complete_all">完結</option>
-      <option value="missing_partial_first">優先</option>
-      <option value="missing_count_desc">未所持巻数が多い順</option>
-      <option value="owned_count_desc">所持巻数が多い順</option>
-    </select>
-    <select id="pubFilterSelect" class="select-box" aria-label="出版社・雑誌絞り込み">
-      <option value="">出版社・雑誌：すべて</option>
-    </select>
-  </div>
-  <div class="chips-scroll" id="filterChips">
-    <button type="button" class="chip active" data-filter="all">すべて</button>
-    <button type="button" class="chip" data-filter="complete_all">完結</button>
-    <button type="button" class="chip" data-filter="complete_missing">完結（未所持あり）</button>
-    <button type="button" class="chip" data-filter="owned_missing">未所持あり</button>
-    <button type="button" class="chip" data-filter="unstarted">未購入</button>
-    <button type="button" class="chip" data-filter="ongoing">連載中</button>
-    <button type="button" class="chip" data-filter="comp">コンプ</button>
-  </div>
-  <div class="chips-scroll" id="kanaChips" aria-label="50音行絞り込み">
-    <button type="button" class="chip kana-chip" data-kana="a">あ</button>
-    <button type="button" class="chip kana-chip" data-kana="k">か</button>
-    <button type="button" class="chip kana-chip" data-kana="s">さ</button>
-    <button type="button" class="chip kana-chip" data-kana="t">た</button>
-    <button type="button" class="chip kana-chip" data-kana="n">な</button>
-    <button type="button" class="chip kana-chip" data-kana="h">は</button>
-    <button type="button" class="chip kana-chip" data-kana="m">ま</button>
-    <button type="button" class="chip kana-chip" data-kana="y">や</button>
-    <button type="button" class="chip kana-chip" data-kana="r">ら</button>
-    <button type="button" class="chip kana-chip" data-kana="w">わ</button>
-  </div>
-  <div class="sub-kana-row" id="subKanaRow" aria-label="行内の文字絞り込み"></div>
-</header>
+    <div class="control-row">
+      <select id="sortSelect" class="select-box" aria-label="並び替え">
+        <option value="kana">50音順</option>
+        <option value="complete_owned_first">完結（1巻以上所持を優先）</option>
+        <option value="complete_all">完結</option>
+        <option value="missing_partial_first">優先</option>
+        <option value="missing_count_desc">未所持巻数が多い順</option>
+        <option value="owned_count_desc">所持巻数が多い順</option>
+      </select>
+      <select id="pubFilterSelect" class="select-box" aria-label="出版社・雑誌絞り込み">
+        <option value="">出版社・雑誌：すべて</option>
+      </select>
+    </div>
+    <div class="chips-scroll" id="filterChips">
+      <button type="button" class="chip active" data-filter="all">すべて</button>
+      <button type="button" class="chip" data-filter="complete_all">完結</button>
+      <button type="button" class="chip" data-filter="complete_missing">完結（未所持あり）</button>
+      <button type="button" class="chip" data-filter="owned_missing">未所持あり</button>
+      <button type="button" class="chip" data-filter="unstarted">未購入</button>
+      <button type="button" class="chip" data-filter="ongoing">連載中</button>
+      <button type="button" class="chip" data-filter="comp">コンプ</button>
+    </div>
+    <div class="chips-scroll" id="kanaChips" aria-label="50音行絞り込み">
+      <button type="button" class="chip kana-chip" data-kana="a">あ</button>
+      <button type="button" class="chip kana-chip" data-kana="k">か</button>
+      <button type="button" class="chip kana-chip" data-kana="s">さ</button>
+      <button type="button" class="chip kana-chip" data-kana="t">た</button>
+      <button type="button" class="chip kana-chip" data-kana="n">な</button>
+      <button type="button" class="chip kana-chip" data-kana="h">は</button>
+      <button type="button" class="chip kana-chip" data-kana="m">ま</button>
+      <button type="button" class="chip kana-chip" data-kana="y">や</button>
+      <button type="button" class="chip kana-chip" data-kana="r">ら</button>
+      <button type="button" class="chip kana-chip" data-kana="w">わ</button>
+    </div>
+    <div class="sub-kana-row" id="subKanaRow" aria-label="行内の文字絞り込み"></div>
+  </header>
 
-<div class="summary-bar" id="summaryBar">
-  <div class="summary-row">
-    <span>表示中: <strong id="visibleCount">0</strong>作品</span>
-    <span>所持タイトル: <strong id="ownedTitleCount">0</strong>作品</span>
-    <span>総所持: <strong id="totalOwnedVols">0</strong>冊</span>
-  </div>
-  <div class="summary-row">
-    <span>所持率: <strong id="overallOwnedRate">0.0%</strong></span>
-    <span>完結コンプ: <strong id="completeCompSummary">0/0 (0.0%)</strong></span>
-    <span class="summary-price">金額合計: <strong id="totalPriceSummary">¥0</strong></span>
+  <div class="summary-bar" id="summaryBar">
+    <div class="summary-row">
+      <span>表示中: <strong id="visibleCount">0</strong>作品</span>
+      <span>所持タイトル: <strong id="ownedTitleCount">0</strong>作品</span>
+      <span>総所持: <strong id="totalOwnedVols">0</strong>冊</span>
+    </div>
+    <div class="summary-row">
+      <span>所持率: <strong id="overallOwnedRate">0.0%</strong></span>
+      <span>完結コンプ: <strong id="completeCompSummary">0/0 (0.0%)</strong></span>
+      <span class="summary-price">金額合計: <strong id="totalPriceSummary">¥0</strong></span>
+    </div>
   </div>
 </div>
 
