@@ -721,13 +721,12 @@ body.modal-open {
     <button type="button" class="chip active" data-filter="all">すべて</button>
     <button type="button" class="chip" data-filter="complete_missing">完結（未所持あり）</button>
     <button type="button" class="chip" data-filter="complete_all">完結</button>
-    <button type="button" class="chip" data-filter="ongoing_missing">未所持あり</button>
+    <button type="button" class="chip" data-filter="owned_missing">未所持あり</button>
     <button type="button" class="chip" data-filter="unstarted">未購入</button>
     <button type="button" class="chip" data-filter="ongoing">連載中</button>
     <button type="button" class="chip" data-filter="comp">コンプ</button>
   </div>
   <div class="chips-scroll" id="kanaChips" aria-label="頭文字絞り込み">
-    <button type="button" class="chip kana-chip active" data-kana="all">頭文字：すべて</button>
     <button type="button" class="chip kana-chip" data-kana="a">あ</button>
     <button type="button" class="chip kana-chip" data-kana="k">か</button>
     <button type="button" class="chip kana-chip" data-kana="s">さ</button>
@@ -855,7 +854,7 @@ if (!Array.isArray(books) || books.length === 0) {
 }
 
 let currentFilter = "all";
-let currentKana = "all";
+let currentKana = null;
 let currentSort = "kana";
 let searchQuery = "";
 let editingBookId = null;
@@ -873,7 +872,7 @@ function toHiraganaFirstChar(str) {
 }
 
 function matchesKanaGroup(book, group) {
-  if (!group || group === "all") return true;
+  if (!group) return true;
   const source = (book.yomi || book.title || "").trim();
   const first = toHiraganaFirstChar(source);
   const groups = {
@@ -986,8 +985,8 @@ function getFilteredAndSortedBooks() {
         return book.status === "完結" && missingCount > 0;
       case "complete_all":
         return book.status === "完結";
-      case "ongoing_missing":
-        return book.status === "連載中" && missingCount > 0;
+      case "owned_missing":
+        return ownedCount >= 1 && missingCount > 0;
       case "unstarted":
         return ownedCount === 0 && book.latest > 0;
       case "ongoing":
@@ -1558,9 +1557,15 @@ document.getElementById("filterChips").querySelectorAll(".chip").forEach(chip =>
 });
 document.getElementById("kanaChips").querySelectorAll(".kana-chip").forEach(chip => {
   chip.addEventListener("click", () => {
-    document.getElementById("kanaChips").querySelectorAll(".kana-chip").forEach(c => c.classList.remove("active"));
-    chip.classList.add("active");
-    currentKana = chip.getAttribute("data-kana");
+    const kana = chip.getAttribute("data-kana");
+    if (currentKana === kana) {
+      currentKana = null;
+      chip.classList.remove("active");
+    } else {
+      document.getElementById("kanaChips").querySelectorAll(".kana-chip").forEach(c => c.classList.remove("active"));
+      chip.classList.add("active");
+      currentKana = kana;
+    }
     renderList();
   });
 });
