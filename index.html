@@ -120,6 +120,49 @@ body.modal-open {
   border-color: var(--accent);
   color: #fff;
 }
+.icon-btn.commit-btn {
+  background: var(--green);
+  border-color: var(--green);
+  color: #06281e;
+  font-weight: 800;
+}
+
+/* Mode Tabs */
+.mode-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 8px;
+}
+.mode-tab {
+  border: none;
+  background: transparent;
+  color: var(--text-sub);
+  border-radius: 9px;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.mode-tab.active {
+  background: var(--accent);
+  color: #fff;
+}
+.tab-badge {
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.25);
+  color: inherit;
+}
 
 /* Search & Controls */
 .search-wrap {
@@ -289,6 +332,82 @@ body.modal-open {
   background: var(--surface-2);
   border-color: #3f4659;
 }
+.shopping-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px 14px;
+}
+.shopping-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.shopping-vol-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 9px;
+}
+.shop-vol-btn {
+  min-width: 40px;
+  height: 36px;
+  padding: 0 9px;
+  border-radius: 9px;
+  border: 1px solid rgba(239, 68, 68, 0.45);
+  background: var(--red-bg);
+  color: var(--red-text);
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+.shop-vol-btn.selected {
+  background: var(--blue-bg);
+  border-color: rgba(59, 130, 246, 0.75);
+  color: var(--blue-text);
+}
+.shop-vol-btn.vol0-type {
+  border-color: rgba(168, 85, 247, 0.45);
+  background: var(--purple-bg);
+  color: var(--purple-text);
+}
+.shop-vol-btn.vol0-type.selected {
+  background: var(--blue-bg);
+  border-color: rgba(59, 130, 246, 0.75);
+  color: var(--blue-text);
+}
+.shop-vol-btn.spin-type {
+  border-color: rgba(20, 184, 166, 0.45);
+  background: var(--teal-bg);
+  color: var(--teal-text);
+}
+.shop-vol-btn.spin-type.selected {
+  background: var(--blue-bg);
+  border-color: rgba(59, 130, 246, 0.75);
+  color: var(--blue-text);
+}
+.shop-select-all-btn {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text-sub);
+  border-radius: 8px;
+  padding: 5px 9px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.shop-select-all-btn.all-checked {
+  background: var(--blue-bg);
+  border-color: rgba(59, 130, 246, 0.5);
+  color: var(--blue-text);
+}
+
 .book-main {
   min-width: 0;
   flex: 1;
@@ -362,6 +481,11 @@ body.modal-open {
 .book-price-inline {
   margin-left: 8px;
   color: #fdba74;
+  font-weight: 700;
+}
+.book-unit-inline {
+  margin-left: 6px;
+  color: #6ee7b7;
   font-weight: 700;
 }
 .book-missing-line {
@@ -757,11 +881,21 @@ body.modal-open {
         <span>📚 漫画本棚</span>
         <span class="app-title-badge" id="totalCountBadge">0作品</span>
       </div>
-      <div class="header-actions">
+      <div class="header-actions" id="mainHeaderActions">
         <button type="button" class="icon-btn" id="openBackupBtn" title="保存・復元">⚙ 保存/復元</button>
         <button type="button" class="icon-btn primary" id="addBookBtn">＋ 追加</button>
       </div>
+      <div class="header-actions" id="shopHeaderActions" style="display:none;">
+        <button type="button" class="icon-btn" id="clearShopSelectionBtn">選択解除</button>
+        <button type="button" class="icon-btn commit-btn" id="commitShopSelectionBtn">完了 (<span id="selectedShopCount">0</span>)</button>
+      </div>
     </div>
+
+    <div class="mode-tabs" role="tablist">
+      <button type="button" class="mode-tab active" data-tab="shelf" id="tabShelfBtn">📚 本棚</button>
+      <button type="button" class="mode-tab" data-tab="shopping" id="tabShoppingBtn">🛒 未所持 <span class="tab-badge" id="missingTabBadge">0</span></button>
+    </div>
+
     <div class="search-wrap">
       <span class="search-icon">🔍</span>
       <input type="search" id="searchInput" class="search-input" placeholder="" autocomplete="off" />
@@ -943,6 +1077,7 @@ if (!Array.isArray(books) || books.length === 0) {
   books = cloneInitialBooks();
 }
 
+let currentTab = "shelf"; // "shelf" | "shopping"
 let currentFilter = "all";
 let currentKana = null;
 let currentChar = null;
@@ -951,6 +1086,29 @@ let currentSort = "kana";
 let searchQuery = "";
 let editingBookId = null;
 let draftBook = null;
+
+// Shopping tab selections: Map<bookId, Set<string>> where token is "main:1", "vol0", "spin:1"
+const shoppingSelections = new Map();
+
+function getShopBookSet(bookId) {
+  if (!shoppingSelections.has(bookId)) {
+    shoppingSelections.set(bookId, new Set());
+  }
+  return shoppingSelections.get(bookId);
+}
+
+function getTotalSelectedShopCount() {
+  let total = 0;
+  shoppingSelections.forEach(set => {
+    total += set.size;
+  });
+  return total;
+}
+
+function updateShopHeaderCounter() {
+  const countEl = document.getElementById("selectedShopCount");
+  if (countEl) countEl.textContent = getTotalSelectedShopCount();
+}
 
 function toHiraganaFirstChar(str) {
   const s = (str || "").trim();
@@ -1092,6 +1250,31 @@ function formatMissingRanges(book) {
   return ranges.join(", ") + "巻";
 }
 
+function getMissingTokensForBook(book) {
+  const tokens = [];
+  if (book.hasVol0 && !book.vol0Owned) {
+    tokens.push({ key: "vol0", label: "0巻", type: "vol0" });
+  }
+  const ownedSet = new Set(book.owned || []);
+  for (let v = 1; v <= (Number(book.latest) || 0); v++) {
+    if (!ownedSet.has(v)) {
+      tokens.push({ key: `main:${v}`, label: `${v}`, type: "main" });
+    }
+  }
+  const spinTotal = Number(book.spinoffTotal) || 0;
+  const spinOwnedSet = new Set(book.spinoffOwned || []);
+  for (let s = 1; s <= spinTotal; s++) {
+    if (!spinOwnedSet.has(s)) {
+      tokens.push({ key: `spin:${s}`, label: `外${s}`, type: "spin" });
+    }
+  }
+  return tokens;
+}
+
+function hasAnyMissingItem(book) {
+  return getMissingTokensForBook(book).length > 0;
+}
+
 function getMainOwnedCount(book) {
   if (!book.owned) return 0;
   return book.owned.filter(v => v >= 1 && v <= MAX_VOL).length;
@@ -1119,6 +1302,13 @@ function getTotalPossibleCount(book) {
   return (Number(book.latest) || 0) + (book.hasVol0 ? 1 : 0) + (Number(book.spinoffTotal) || 0);
 }
 
+function getUnitPrice(book) {
+  const price = Number(book.price) || 0;
+  const totalVols = getTotalPossibleCount(book);
+  if (price <= 0 || totalVols <= 0) return 0;
+  return Math.round(price / totalVols);
+}
+
 function hasAnyOwnedTitle(book) {
   return getTotalOwnedCount(book) > 0;
 }
@@ -1141,6 +1331,9 @@ function compareKana(a, b) {
 function getFilteredAndSortedBooks() {
   const q = searchQuery.trim().toLowerCase();
   let list = books.filter(book => {
+    if (currentTab === "shopping" && !hasAnyMissingItem(book)) {
+      return false;
+    }
     if (q) {
       const t = (book.title || "").toLowerCase();
       const y = (book.yomi || "").toLowerCase();
@@ -1251,6 +1444,9 @@ function renderSummaryStats(visibleList) {
   document.getElementById("totalCountBadge").textContent = `${books.length}作品`;
   document.getElementById("visibleCount").textContent = visibleList.length;
 
+  const missingBooksCount = books.filter(b => hasAnyMissingItem(b)).length;
+  document.getElementById("missingTabBadge").textContent = missingBooksCount;
+
   const ownedTitles = books.filter(b => hasAnyOwnedTitle(b)).length;
   document.getElementById("ownedTitleCount").textContent = ownedTitles.toLocaleString();
 
@@ -1265,13 +1461,108 @@ function renderSummaryStats(visibleList) {
   document.getElementById("totalPriceSummary").textContent = `¥${totalPrice.toLocaleString()}`;
 }
 
+function syncTabUi() {
+  const isShop = currentTab === "shopping";
+  document.getElementById("tabShelfBtn").classList.toggle("active", !isShop);
+  document.getElementById("tabShoppingBtn").classList.toggle("active", isShop);
+  document.getElementById("mainHeaderActions").style.display = isShop ? "none" : "flex";
+  document.getElementById("shopHeaderActions").style.display = isShop ? "flex" : "none";
+  updateShopHeaderCounter();
+}
+
 function renderList() {
+  syncTabUi();
   const list = getFilteredAndSortedBooks();
   const container = document.getElementById("bookList");
   renderSummaryStats(list);
 
   if (list.length === 0) {
-    container.innerHTML = `<div class="empty-state">条件に一致する作品がありません</div>`;
+    container.innerHTML = `<div class="empty-state">${currentTab === "shopping" ? "未所持の作品はありません" : "条件に一致する作品がありません"}</div>`;
+    return;
+  }
+
+  if (currentTab === "shopping") {
+    container.innerHTML = list.map(book => {
+      const mainOwned = getMainOwnedCount(book);
+      const missingTokens = getMissingTokensForBook(book);
+      const selectedSet = getShopBookSet(book.id);
+      const pubMagText = formatPubMag(book);
+      const statusTagClass = book.status === "完結" ? "tag-status-end" : "tag-status-on";
+      const priceVal = Number(book.price) || 0;
+      const unitPrice = getUnitPrice(book);
+      const derived = getDerivedStatus(book);
+
+      const showDerivedBadge = derived === "未購入";
+      const derivedBadge = showDerivedBadge
+        ? `<span class="tag tag-owned-unstarted">未購入</span>`
+        : "";
+      const pubLine = pubMagText
+        ? `<div class="book-pub-line">${escapeHtml(pubMagText)}</div>`
+        : "";
+      const priceInline = priceVal > 0
+        ? `<span class="book-price-inline">¥${priceVal.toLocaleString()}</span>`
+        : "";
+      const unitInline = unitPrice > 0
+        ? `<span class="book-unit-inline">¥${unitPrice.toLocaleString()}/冊</span>`
+        : "";
+      const memoLine = book.memo && book.memo.trim()
+        ? `<div class="book-memo-line">📝 ${escapeHtml(book.memo.trim())}</div>`
+        : "";
+
+      const allSelected = missingTokens.length > 0 && missingTokens.every(t => selectedSet.has(t.key));
+      const chipsHtml = missingTokens.map(tok => {
+        const isSel = selectedSet.has(tok.key);
+        const typeCls = tok.type === "vol0" ? "vol0-type" : (tok.type === "spin" ? "spin-type" : "");
+        return `<button type="button" class="shop-vol-btn ${typeCls} ${isSel ? "selected" : ""}" data-book-id="${book.id}" data-token="${tok.key}">${escapeHtml(tok.label)}</button>`;
+      }).join("");
+
+      return `
+        <article class="shopping-card" data-book-id="${book.id}">
+          <div class="shopping-card-head">
+            <div class="book-main">
+              <div class="book-meta-top">
+                <span class="tag ${statusTagClass}">${escapeHtml(book.status)}</span>
+                ${derivedBadge}
+              </div>
+              <div class="book-title">${escapeHtml(book.title)}</div>
+              ${pubLine}
+              <div class="book-counts">既刊${book.latest}巻 / 所持${mainOwned}巻<span class="book-rem-inline">あと${missingTokens.length}冊</span>${priceInline}${unitInline}</div>
+            </div>
+            <button type="button" class="shop-select-all-btn ${allSelected ? "all-checked" : ""}" data-select-all-book="${book.id}">${allSelected ? "全解除" : "全選択"}</button>
+          </div>
+          <div class="shopping-vol-chips">${chipsHtml}</div>
+          ${memoLine}
+        </article>
+      `;
+    }).join("");
+
+    container.querySelectorAll(".shop-vol-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const bId = Number(btn.getAttribute("data-book-id"));
+        const token = btn.getAttribute("data-token");
+        const set = getShopBookSet(bId);
+        if (set.has(token)) set.delete(token);
+        else set.add(token);
+        renderList();
+      });
+    });
+
+    container.querySelectorAll(".shop-select-all-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const bId = Number(btn.getAttribute("data-select-all-book"));
+        const book = books.find(b => b.id === bId);
+        if (!book) return;
+        const tokens = getMissingTokensForBook(book);
+        const set = getShopBookSet(bId);
+        const allSelected = tokens.length > 0 && tokens.every(t => set.has(t.key));
+        if (allSelected) {
+          set.clear();
+        } else {
+          tokens.forEach(t => set.add(t.key));
+        }
+        renderList();
+      });
+    });
     return;
   }
 
@@ -1285,6 +1576,7 @@ function renderList() {
     const pubMagText = formatPubMag(book);
     const statusTagClass = book.status === "完結" ? "tag-status-end" : "tag-status-on";
     const priceVal = Number(book.price) || 0;
+    const unitPrice = getUnitPrice(book);
 
     const showDerivedBadge = derived === "未購入" || derived === "コンプ" || derived === "既刊まで所持";
     let derivedClass = "tag-owned-complete";
@@ -1309,6 +1601,9 @@ function renderList() {
     const priceInline = priceVal > 0
       ? `<span class="book-price-inline">¥${priceVal.toLocaleString()}</span>`
       : "";
+    const unitInline = unitPrice > 0
+      ? `<span class="book-unit-inline">¥${unitPrice.toLocaleString()}/冊</span>`
+      : "";
     const missingLine = missingText
       ? `<div class="book-missing-line">未所持：${escapeHtml(missingText)}</div>`
       : "";
@@ -1331,7 +1626,7 @@ function renderList() {
           </div>
           <div class="book-title">${escapeHtml(book.title)}</div>
           ${pubLine}
-          <div class="book-counts">既刊${book.latest}巻 / 所持${mainOwned}巻${extraCountNote}${remInline}${priceInline}</div>
+          <div class="book-counts">既刊${book.latest}巻 / 所持${mainOwned}巻${extraCountNote}${remInline}${priceInline}${unitInline}</div>
           ${missingLine}
           ${memoLine}
         </div>
@@ -1347,6 +1642,63 @@ function renderList() {
     });
   });
 }
+
+// Shopping Tab Actions
+document.getElementById("tabShelfBtn").addEventListener("click", () => {
+  currentTab = "shelf";
+  renderList();
+});
+
+document.getElementById("tabShoppingBtn").addEventListener("click", () => {
+  currentTab = "shopping";
+  renderList();
+});
+
+document.getElementById("clearShopSelectionBtn").addEventListener("click", () => {
+  shoppingSelections.clear();
+  renderList();
+});
+
+document.getElementById("commitShopSelectionBtn").addEventListener("click", () => {
+  const totalSelected = getTotalSelectedShopCount();
+  if (totalSelected === 0) {
+    alert("購入した巻を選択してください。");
+    return;
+  }
+  shoppingSelections.forEach((tokenSet, bookId) => {
+    if (tokenSet.size === 0) return;
+    const idx = books.findIndex(b => b.id === bookId);
+    if (idx === -1) return;
+    const book = normalizeBook(books[idx]);
+    const mainSet = new Set(book.owned || []);
+    const spinSet = new Set(book.spinoffOwned || []);
+
+    tokenSet.forEach(tok => {
+      if (tok === "vol0") {
+        book.hasVol0 = true;
+        book.vol0Owned = true;
+      } else if (tok.startsWith("main:")) {
+        const v = Number(tok.slice(5));
+        if (Number.isInteger(v) && v >= 1 && v <= MAX_VOL) {
+          mainSet.add(v);
+        }
+      } else if (tok.startsWith("spin:")) {
+        const s = Number(tok.slice(5));
+        if (Number.isInteger(s) && s >= 1 && s <= book.spinoffTotal) {
+          spinSet.add(s);
+        }
+      }
+    });
+
+    book.owned = Array.from(mainSet).sort((a, b) => a - b);
+    book.spinoffOwned = Array.from(spinSet).sort((a, b) => a - b);
+    books[idx] = normalizeBook(book);
+  });
+
+  shoppingSelections.clear();
+  saveBooks(books);
+  renderList();
+});
 
 function openDetailModal(bookId) {
   editingBookId = bookId;
@@ -1411,6 +1763,7 @@ function renderDetailBody() {
   const totalOwnedCount = getTotalOwnedCount(draftBook);
   const derived = getDerivedStatus(draftBook);
   const missingText = formatMissingRanges(draftBook);
+  const unitPrice = getUnitPrice(draftBook);
 
   const showDerivedBadge = derived === "未購入" || derived === "コンプ" || derived === "既刊まで所持";
   let derivedClass = "tag-owned-complete";
@@ -1529,7 +1882,10 @@ function renderDetailBody() {
         </div>
       </div>
       <div class="field-row">
-        <label class="field-label">金額</label>
+        <div class="field-label-line">
+          <label class="field-label">金額</label>
+          <span id="detailUnitPriceBadge" style="font-size:12px; font-weight:700; color:#6ee7b7;">${unitPrice > 0 ? `¥${unitPrice.toLocaleString()}/冊` : ""}</span>
+        </div>
         <input type="number" id="editPrice" class="text-input" min="0" step="1" value="${Number(draftBook.price) || 0}" placeholder="" />
       </div>
       <div class="field-row">
@@ -1626,6 +1982,9 @@ function renderDetailBody() {
     let val = parseInt(e.target.value, 10);
     if (isNaN(val) || val < 0) val = 0;
     draftBook.price = val;
+    const u = getUnitPrice(draftBook);
+    const badge = document.getElementById("detailUnitPriceBadge");
+    if (badge) badge.textContent = u > 0 ? `¥${u.toLocaleString()}/冊` : "";
     autoSaveDraftIfExisting();
   });
 
@@ -1759,6 +2118,7 @@ function renderDetailBody() {
     delBtn.addEventListener("click", () => {
       if (confirm(`本当に「${draftBook.title}」を本棚から削除しますか？`)) {
         books = books.filter(b => b.id !== editingBookId);
+        shoppingSelections.delete(editingBookId);
         saveBooks(books);
         refreshPubFilterOptions();
         closeDetailModal();
@@ -1895,6 +2255,7 @@ document.getElementById("importJsonInput").addEventListener("change", e => {
       const imported = JSON.parse(ev.target.result);
       if (!Array.isArray(imported)) throw new Error("Invalid format");
       books = imported.map(b => normalizeBook(b));
+      shoppingSelections.clear();
       saveBooks(books);
       refreshPubFilterOptions();
       renderList();
@@ -1911,6 +2272,7 @@ document.getElementById("importJsonInput").addEventListener("change", e => {
 document.getElementById("resetInitialBtn").addEventListener("click", () => {
   if (confirm("現在のデータを消去して、最初の72作品データに戻しますか？")) {
     books = cloneInitialBooks();
+    shoppingSelections.clear();
     saveBooks(books);
     refreshPubFilterOptions();
     renderList();
