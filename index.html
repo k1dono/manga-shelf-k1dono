@@ -812,7 +812,6 @@ body.modal-open {
     </div>
     <div class="summary-row">
       <span>所持率: <strong id="overallOwnedRate">0.0%</strong></span>
-      <span>完結コンプ: <strong id="completeCompSummary">0/0 (0.0%)</strong></span>
       <span class="summary-price">金額合計: <strong id="totalPriceSummary">¥0</strong></span>
     </div>
   </div>
@@ -999,16 +998,19 @@ function renderSubKanaRow() {
   }
   const grp = KANA_GROUPS[currentKana];
   row.classList.add("open");
-  const allBtnHtml = `<button type="button" class="chip char-chip ${currentChar === null ? "active" : ""}" data-char="">${grp.label}すべて</button>`;
   const charBtnsHtml = grp.chars.map(ch =>
     `<button type="button" class="chip char-chip ${currentChar === ch ? "active" : ""}" data-char="${ch}">${ch}</button>`
   ).join("");
-  row.innerHTML = allBtnHtml + charBtnsHtml;
+  row.innerHTML = charBtnsHtml;
 
   row.querySelectorAll(".char-chip").forEach(btn => {
     btn.addEventListener("click", () => {
       const val = btn.getAttribute("data-char");
-      currentChar = val ? val : null;
+      if (currentChar === val) {
+        currentChar = null;
+      } else {
+        currentChar = val;
+      }
       renderSubKanaRow();
       renderList();
     });
@@ -1018,21 +1020,29 @@ function renderSubKanaRow() {
 function refreshPubFilterOptions() {
   const sel = document.getElementById("pubFilterSelect");
   const prev = currentPubFilter;
-  const pubSet = new Set();
-  const magSet = new Set();
+  const pubCounts = new Map();
+  const magCounts = new Map();
   books.forEach(b => {
-    if (b.publisher && b.publisher.trim()) pubSet.add(b.publisher.trim());
-    if (b.magazine && b.magazine.trim()) magSet.add(b.magazine.trim());
+    const p = (b.publisher || "").trim();
+    const m = (b.magazine || "").trim();
+    if (p) pubCounts.set(p, (pubCounts.get(p) || 0) + 1);
+    if (m) magCounts.set(m, (magCounts.get(m) || 0) + 1);
   });
-  const pubs = Array.from(pubSet).sort((a, b) => a.localeCompare(b, "ja"));
-  const mags = Array.from(magSet).sort((a, b) => a.localeCompare(b, "ja"));
+
+  const sortByCountDesc = ([aName, aCount], [bName, bCount]) => {
+    if (bCount !== aCount) return bCount - aCount;
+    return aName.localeCompare(bName, "ja");
+  };
+
+  const pubs = Array.from(pubCounts.entries()).sort(sortByCountDesc);
+  const mags = Array.from(magCounts.entries()).sort(sortByCountDesc);
 
   let html = `<option value="">出版社・雑誌：すべて</option>`;
   if (pubs.length > 0) {
-    html += `<optgroup label="出版社">` + pubs.map(p => `<option value="pub:${escapeHtml(p)}">${escapeHtml(p)}</option>`).join("") + `</optgroup>`;
+    html += `<optgroup label="出版社">` + pubs.map(([p, cnt]) => `<option value="pub:${escapeHtml(p)}">${escapeHtml(p)} (${cnt})</option>`).join("") + `</optgroup>`;
   }
   if (mags.length > 0) {
-    html += `<optgroup label="雑誌・レーベル">` + mags.map(m => `<option value="mag:${escapeHtml(m)}">${escapeHtml(m)}</option>`).join("") + `</optgroup>`;
+    html += `<optgroup label="雑誌・レーベル">` + mags.map(([m, cnt]) => `<option value="mag:${escapeHtml(m)}">${escapeHtml(m)} (${cnt})</option>`).join("") + `</optgroup>`;
   }
   sel.innerHTML = html;
 
@@ -1250,11 +1260,6 @@ function renderSummaryStats(visibleList) {
   const totalPossibleVols = books.reduce((sum, b) => sum + getTotalPossibleCount(b), 0);
   const ownedRate = totalPossibleVols > 0 ? ((totalOwnedVols / totalPossibleVols) * 100).toFixed(1) : "0.0";
   document.getElementById("overallOwnedRate").textContent = `${ownedRate}%`;
-
-  const completeBooks = books.filter(b => b.status === "完結");
-  const compCount = completeBooks.filter(b => getDerivedStatus(b) === "コンプ").length;
-  const compRate = completeBooks.length > 0 ? ((compCount / completeBooks.length) * 100).toFixed(1) : "0.0";
-  document.getElementById("completeCompSummary").textContent = `${compCount}/${completeBooks.length} (${compRate}%)`;
 
   const totalPrice = books.reduce((sum, b) => sum + (Number(b.price) || 0), 0);
   document.getElementById("totalPriceSummary").textContent = `¥${totalPrice.toLocaleString()}`;
@@ -1487,23 +1492,23 @@ function renderDetailBody() {
     <div class="field-group">
       <div class="field-row">
         <label class="field-label">タイトル</label>
-        <input type="text" id="editTitle" class="text-input" value="${escapeHtml(draftBook.title)}" placeholder="例：呪術廻戦" />
+        <input type="text" id="editTitle" class="text-input" value="${escapeHtml(draftBook.title)}" placeholder="" />
       </div>
       <div class="field-row">
         <div class="field-label-line">
           <label class="field-label">読みがな</label>
           <button type="button" class="mini-action-btn" id="copyTitleToYomiBtn">タイトルをコピー</button>
         </div>
-        <input type="text" id="editYomi" class="text-input" value="${escapeHtml(draftBook.yomi)}" placeholder="例：じゅじゅつかいせん" />
+        <input type="text" id="editYomi" class="text-input" value="${escapeHtml(draftBook.yomi)}" placeholder="" />
       </div>
       <div class="field-row-2col">
         <div class="field-row">
           <label class="field-label">出版社</label>
-          <input type="text" id="editPublisher" class="text-input" value="${escapeHtml(draftBook.publisher)}" placeholder="例：集英社、講談社" />
+          <input type="text" id="editPublisher" class="text-input" value="${escapeHtml(draftBook.publisher)}" placeholder="" />
         </div>
         <div class="field-row">
           <label class="field-label">雑誌・レーベル</label>
-          <input type="text" id="editMagazine" class="text-input" value="${escapeHtml(draftBook.magazine)}" placeholder="例：ジャンプ、マガジン" />
+          <input type="text" id="editMagazine" class="text-input" value="${escapeHtml(draftBook.magazine)}" placeholder="" />
         </div>
       </div>
       <div class="field-row-2col">
@@ -1524,12 +1529,12 @@ function renderDetailBody() {
         </div>
       </div>
       <div class="field-row">
-        <label class="field-label">金額（円・相場／購入額など）</label>
-        <input type="number" id="editPrice" class="text-input" min="0" step="1" value="${Number(draftBook.price) || 0}" placeholder="0" />
+        <label class="field-label">金額</label>
+        <input type="number" id="editPrice" class="text-input" min="0" step="1" value="${Number(draftBook.price) || 0}" placeholder="" />
       </div>
       <div class="field-row">
-        <label class="field-label">メモ（新刊・買い足し・形態など）</label>
-        <textarea id="editMemo" class="textarea-input" placeholder="例：メルカリ全巻相場 4,500円／10巻以降は紙で購入">${escapeHtml(draftBook.memo || "")}</textarea>
+        <label class="field-label">メモ</label>
+        <textarea id="editMemo" class="textarea-input" placeholder="">${escapeHtml(draftBook.memo || "")}</textarea>
       </div>
     </div>
 
