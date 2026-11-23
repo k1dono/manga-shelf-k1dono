@@ -283,10 +283,6 @@ body.modal-open {
   background: var(--accent-dim);
   color: #fdba74;
 }
-.tag-owned-missing {
-  background: var(--red-bg);
-  color: var(--red-text);
-}
 .tag-owned-unstarted {
   background: rgba(107, 114, 128, 0.22);
   color: #9ca3af;
@@ -719,8 +715,8 @@ body.modal-open {
   </div>
   <div class="chips-scroll" id="filterChips">
     <button type="button" class="chip active" data-filter="all">すべて</button>
-    <button type="button" class="chip" data-filter="complete_missing">完結（未所持あり）</button>
     <button type="button" class="chip" data-filter="complete_all">完結</button>
+    <button type="button" class="chip" data-filter="complete_missing">完結（未所持あり）</button>
     <button type="button" class="chip" data-filter="owned_missing">未所持あり</button>
     <button type="button" class="chip" data-filter="unstarted">未購入</button>
     <button type="button" class="chip" data-filter="ongoing">連載中</button>
@@ -981,10 +977,10 @@ function getFilteredAndSortedBooks() {
     const derived = getDerivedStatus(book);
 
     switch (currentFilter) {
-      case "complete_missing":
-        return book.status === "完結" && missingCount > 0;
       case "complete_all":
         return book.status === "完結";
+      case "complete_missing":
+        return book.status === "完結" && missingCount > 0;
       case "owned_missing":
         return ownedCount >= 1 && missingCount > 0;
       case "unstarted":
@@ -1079,10 +1075,14 @@ function renderList() {
     const derived = getDerivedStatus(book);
     const missingText = formatMissingRanges(book);
     const statusTagClass = book.status === "完結" ? "tag-status-end" : "tag-status-on";
+
+    const showDerivedBadge = derived === "未購入" || derived === "コンプ" || derived === "既刊まで所持";
     let derivedClass = "tag-owned-complete";
-    if (derived === "未所持あり") derivedClass = "tag-owned-missing";
-    else if (derived === "未購入") derivedClass = "tag-owned-unstarted";
+    if (derived === "未購入") derivedClass = "tag-owned-unstarted";
     else if (derived === "既刊まで所持") derivedClass = "tag-owned-uptodate";
+    const derivedBadge = showDerivedBadge
+      ? `<span class="tag ${derivedClass}">${escapeHtml(derived)}</span>`
+      : "";
 
     const vol0Badge = book.hasVol0
       ? `<span class="tag tag-vol0">${book.vol0Owned ? "0巻所持" : "0巻あり"}</span>`
@@ -1103,7 +1103,7 @@ function renderList() {
         <div class="book-main">
           <div class="book-meta-top">
             <span class="tag ${statusTagClass}">${escapeHtml(book.status)}</span>
-            <span class="tag ${derivedClass}">${escapeHtml(derived)}</span>
+            ${derivedBadge}
             ${vol0Badge}
             ${spinBadge}
           </div>
@@ -1183,10 +1183,13 @@ function renderDetailBody() {
   const derived = getDerivedStatus(draftBook);
   const missingText = formatMissingRanges(draftBook);
 
+  const showDerivedBadge = derived === "未購入" || derived === "コンプ" || derived === "既刊まで所持";
   let derivedClass = "tag-owned-complete";
-  if (derived === "未所持あり") derivedClass = "tag-owned-missing";
-  else if (derived === "未購入") derivedClass = "tag-owned-unstarted";
+  if (derived === "未購入") derivedClass = "tag-owned-unstarted";
   else if (derived === "既刊まで所持") derivedClass = "tag-owned-uptodate";
+  const derivedBadge = showDerivedBadge
+    ? `<span class="tag ${derivedClass}">${escapeHtml(derived)}</span>`
+    : "";
 
   const maxGridVol = Math.min(MAX_VOL, Math.max(0, Number(draftBook.latest) || 0));
   let tilesHtml = "";
@@ -1291,8 +1294,8 @@ function renderDetailBody() {
     <div class="detail-status-card">
       <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px;">
         <div>
-          <span class="tag ${derivedClass}">${escapeHtml(derived)}</span>
-          <strong style="margin-left:6px; font-size:15px;">既刊${draftBook.latest}巻 / 所持${mainOwnedCount}巻</strong>
+          ${derivedBadge}
+          <strong style="${showDerivedBadge ? "margin-left:6px;" : ""} font-size:15px;">既刊${draftBook.latest}巻 / 所持${mainOwnedCount}巻</strong>
         </div>
         <span style="font-size:12px; color:var(--text-sub); font-weight:700;">合計所持：${totalOwnedCount}冊</span>
       </div>
