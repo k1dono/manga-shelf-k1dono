@@ -306,6 +306,23 @@ body.modal-open {
 .summary-price strong {
   color: #fdba74;
 }
+.shop-selection-bar {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(59, 130, 246, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  color: var(--blue-text);
+}
+.shop-selection-bar strong {
+  color: #fff;
+}
+.shop-selection-bar .shop-total-price strong {
+  color: #fdba74;
+}
 
 /* Book List */
 .book-list {
@@ -618,6 +635,41 @@ body.modal-open {
 .text-input:focus, .textarea-input:focus {
   border-color: var(--accent);
 }
+.custom-unit-box {
+  margin-top: 6px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.custom-unit-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-sub);
+  font-weight: 700;
+}
+.custom-vol-input {
+  width: 72px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 5px 7px;
+  font-size: 14px;
+  font-weight: 800;
+  text-align: center;
+  outline: none;
+}
+.custom-vol-input:focus {
+  border-color: var(--accent);
+}
 .stepper-wrap {
   display: flex;
   align-items: center;
@@ -894,6 +946,7 @@ body.modal-open {
     <div class="control-row">
       <select id="sortSelect" class="select-box" aria-label="並び替え">
         <option value="kana">50音順</option>
+        <option value="unpriced_non_comp_first">コンプ以外＆金額未入力を優先</option>
         <option value="complete_owned_first">完結（1巻以上所持を優先）</option>
         <option value="complete_all">完結</option>
         <option value="missing_partial_first">優先</option>
@@ -935,8 +988,13 @@ body.modal-open {
       <span>総所持: <strong id="totalOwnedVols">0</strong>冊</span>
     </div>
     <div class="summary-row">
+      <span>合計: <strong id="totalPossibleVols">0</strong>冊</span>
       <span>所持率: <strong id="overallOwnedRate">0.0%</strong></span>
       <span class="summary-price">金額合計: <strong id="totalPriceSummary">¥0</strong></span>
+    </div>
+    <div class="shop-selection-bar" id="shopSelectionBar" style="display:none;">
+      <span>選択中: <strong id="shopSelectedTitlesCount">0</strong>作品 / <strong id="shopSelectedVolsCount">0</strong>冊</span>
+      <span class="shop-total-price">選択タイトル合計金額: <strong id="shopSelectedTotalPrice">¥0</strong></span>
     </div>
   </div>
 </div>
@@ -1076,6 +1134,7 @@ let currentSort = "kana";
 let searchQuery = "";
 let editingBookId = null;
 let draftBook = null;
+let customUnitVols = 0;
 
 // Shopping tab selections: Map<bookId, Set<string>> where token is "main:1", "vol0", "spin:1"
 const shoppingSelections = new Map();
@@ -1095,9 +1154,33 @@ function getTotalSelectedShopCount() {
   return total;
 }
 
+function getSelectedShopStats() {
+  let selectedTitles = 0;
+  let selectedVols = 0;
+  let selectedPriceSum = 0;
+
+  shoppingSelections.forEach((set, bookId) => {
+    if (!set || set.size === 0) return;
+    const book = books.find(b => b.id === bookId);
+    if (!book) return;
+    selectedTitles += 1;
+    selectedVols += set.size;
+    selectedPriceSum += (Number(book.price) || 0);
+  });
+
+  return { selectedTitles, selectedVols, selectedPriceSum };
+}
+
 function updateShopHeaderCounter() {
   const countEl = document.getElementById("selectedShopCount");
-  if (countEl) countEl.textContent = getTotalSelectedShopCount();
+  const { selectedTitles, selectedVols, selectedPriceSum } = getSelectedShopStats();
+  if (countEl) countEl.textContent = selectedVols;
+  const titlesEl = document.getElementById("shopSelectedTitlesCount");
+  const volsEl = document.getElementById("shopSelectedVolsCount");
+  const priceEl = document.getElementById("shopSelectedTotalPrice");
+  if (titlesEl) titlesEl.textContent = selectedTitles.toLocaleString();
+  if (volsEl) volsEl.textContent = selectedVols.toLocaleString();
+  if (priceEl) priceEl.textContent = `¥${selectedPriceSum.toLocaleString()}`;
 }
 
 function toHiraganaFirstChar(str) {
@@ -1303,6 +1386,13 @@ function getUnitPrice(book) {
   return Math.round(price / missingVols);
 }
 
+function getCustomUnitPrice(book, vols) {
+  const price = Number(book.price) || 0;
+  const v = Number(vols) || 0;
+  if (price <= 0 || v <= 0) return 0;
+  return Math.round(price / v);
+}
+
 function hasAnyOwnedTitle(book) {
   return getTotalOwnedCount(book) > 0;
 }
@@ -1314,6 +1404,10 @@ function getDerivedStatus(book) {
     return ownedCount > 0 ? "未所持あり" : "未購入";
   }
   return book.status === "連載中" ? "既刊まで所持" : "コンプ";
+}
+
+function isUnpricedNonComp(book) {
+  return getDerivedStatus(book) !== "コンプ" && (Number(book.price) || 0) <= 0;
 }
 
 function compareKana(a, b) {
@@ -1376,6 +1470,12 @@ function getFilteredAndSortedBooks() {
     const ma = getMissingMainCount(a);
     const mb = getMissingMainCount(b);
     if (currentSort === "kana") {
+      return compareKana(a, b);
+    }
+    if (currentSort === "unpriced_non_comp_first") {
+      const ra = isUnpricedNonComp(a) ? 0 : 1;
+      const rb = isUnpricedNonComp(b) ? 0 : 1;
+      if (ra !== rb) return ra - rb;
       return compareKana(a, b);
     }
     if (currentSort === "complete_owned_first") {
@@ -1448,11 +1548,16 @@ function renderSummaryStats(visibleList) {
   document.getElementById("totalOwnedVols").textContent = totalOwnedVols.toLocaleString();
 
   const totalPossibleVols = books.reduce((sum, b) => sum + getTotalPossibleCount(b), 0);
+  document.getElementById("totalPossibleVols").textContent = totalPossibleVols.toLocaleString();
+
   const ownedRate = totalPossibleVols > 0 ? ((totalOwnedVols / totalPossibleVols) * 100).toFixed(1) : "0.0";
   document.getElementById("overallOwnedRate").textContent = `${ownedRate}%`;
 
   const totalPrice = books.reduce((sum, b) => sum + (Number(b.price) || 0), 0);
   document.getElementById("totalPriceSummary").textContent = `¥${totalPrice.toLocaleString()}`;
+
+  document.getElementById("shopSelectionBar").style.display = currentTab === "shopping" ? "flex" : "none";
+  updateShopHeaderCounter();
 }
 
 function syncTabUi() {
@@ -1680,6 +1785,7 @@ document.getElementById("commitShopSelectionBtn").addEventListener("click", () =
 
 function openDetailModal(bookId) {
   editingBookId = bookId;
+  customUnitVols = 0;
   if (bookId === null) {
     const maxId = books.reduce((m, b) => Math.max(m, b.id), 0);
     draftBook = normalizeBook({
@@ -1742,6 +1848,7 @@ function renderDetailBody() {
   const derived = getDerivedStatus(draftBook);
   const missingText = formatMissingRanges(draftBook);
   const unitPrice = getUnitPrice(draftBook);
+  const customUnit = getCustomUnitPrice(draftBook, customUnitVols);
 
   const showDerivedBadge = derived === "未購入" || derived === "コンプ" || derived === "既刊まで所持";
   let derivedClass = "tag-owned-complete";
@@ -1865,6 +1972,14 @@ function renderDetailBody() {
           <span id="detailUnitPriceBadge" style="font-size:12px; font-weight:700; color:#6ee7b7;">${unitPrice > 0 ? `¥${unitPrice.toLocaleString()}/冊` : ""}</span>
         </div>
         <input type="number" id="editPrice" class="text-input" min="0" step="1" value="${Number(draftBook.price) || 0}" placeholder="" />
+        <div class="custom-unit-box">
+          <div class="custom-unit-left">
+            <span>指定巻数</span>
+            <input type="number" id="customUnitVolsInput" class="custom-vol-input" min="1" max="${MAX_VOL}" value="${customUnitVols > 0 ? customUnitVols : ""}" placeholder="例:79" />
+            <span>冊で計算</span>
+          </div>
+          <span id="customUnitPriceResult" style="font-size:13px; font-weight:800; color:#fdba74;">${customUnit > 0 ? `¥${customUnit.toLocaleString()}/冊` : ""}</span>
+        </div>
       </div>
       <div class="field-row">
         <label class="field-label">メモ</label>
@@ -1914,6 +2029,16 @@ function renderDetailBody() {
 
   body.scrollTop = prevScroll;
 
+  function refreshDetailPriceDisplays() {
+    const u = getUnitPrice(draftBook);
+    const badge = document.getElementById("detailUnitPriceBadge");
+    if (badge) badge.textContent = u > 0 ? `¥${u.toLocaleString()}/冊` : "";
+
+    const cu = getCustomUnitPrice(draftBook, customUnitVols);
+    const cuEl = document.getElementById("customUnitPriceResult");
+    if (cuEl) cuEl.textContent = cu > 0 ? `¥${cu.toLocaleString()}/冊` : "";
+  }
+
   document.getElementById("editTitle").addEventListener("input", e => {
     draftBook.title = e.target.value;
     document.getElementById("detailHeaderTitle").textContent = draftBook.title || "作品詳細";
@@ -1960,10 +2085,15 @@ function renderDetailBody() {
     let val = parseInt(e.target.value, 10);
     if (isNaN(val) || val < 0) val = 0;
     draftBook.price = val;
-    const u = getUnitPrice(draftBook);
-    const badge = document.getElementById("detailUnitPriceBadge");
-    if (badge) badge.textContent = u > 0 ? `¥${u.toLocaleString()}/冊` : "";
+    refreshDetailPriceDisplays();
     autoSaveDraftIfExisting();
+  });
+
+  document.getElementById("customUnitVolsInput").addEventListener("input", e => {
+    let val = parseInt(e.target.value, 10);
+    if (isNaN(val) || val <= 0) customUnitVols = 0;
+    else customUnitVols = Math.min(MAX_VOL, val);
+    refreshDetailPriceDisplays();
   });
 
   document.getElementById("editMemo").addEventListener("input", e => {
@@ -2075,6 +2205,7 @@ function renderDetailBody() {
   document.getElementById("spinPlusBtn").addEventListener("click", () => {
     const nextVal = Math.min(100, (Number(draftBook.spinoffTotal) || 0) + 1);
     draftBook.spinoffTotal = nextVal;
+    draftBook.spinoffOwned = (draftBook.spinoffOwned || []).filter(v => v <= nextVal);
     autoSaveDraftIfExisting();
     renderDetailBody();
   });
@@ -2111,6 +2242,7 @@ function closeDetailModal() {
   document.body.classList.remove("modal-open");
   editingBookId = null;
   draftBook = null;
+  customUnitVols = 0;
 }
 
 document.getElementById("closeDetailBtn").addEventListener("click", closeDetailModal);
