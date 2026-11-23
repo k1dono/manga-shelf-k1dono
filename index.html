@@ -478,16 +478,6 @@ body.modal-open {
   color: var(--red-text);
   font-weight: 800;
 }
-.book-price-inline {
-  margin-left: 8px;
-  color: #fdba74;
-  font-weight: 700;
-}
-.book-unit-inline {
-  margin-left: 6px;
-  color: #6ee7b7;
-  font-weight: 700;
-}
 .book-missing-line {
   margin-top: 5px;
   font-size: 12px;
@@ -1492,8 +1482,6 @@ function renderList() {
       const selectedSet = getShopBookSet(book.id);
       const pubMagText = formatPubMag(book);
       const statusTagClass = book.status === "完結" ? "tag-status-end" : "tag-status-on";
-      const priceVal = Number(book.price) || 0;
-      const unitPrice = getUnitPrice(book);
       const derived = getDerivedStatus(book);
 
       const showDerivedBadge = derived === "未購入";
@@ -1502,12 +1490,6 @@ function renderList() {
         : "";
       const pubLine = pubMagText
         ? `<div class="book-pub-line">${escapeHtml(pubMagText)}</div>`
-        : "";
-      const priceInline = priceVal > 0
-        ? `<span class="book-price-inline">¥${priceVal.toLocaleString()}</span>`
-        : "";
-      const unitInline = unitPrice > 0
-        ? `<span class="book-unit-inline">¥${unitPrice.toLocaleString()}/冊</span>`
         : "";
       const memoLine = book.memo && book.memo.trim()
         ? `<div class="book-memo-line">📝 ${escapeHtml(book.memo.trim())}</div>`
@@ -1530,7 +1512,7 @@ function renderList() {
               </div>
               <div class="book-title">${escapeHtml(book.title)}</div>
               ${pubLine}
-              <div class="book-counts">既刊${book.latest}巻 / 所持${mainOwned}巻<span class="book-rem-inline">あと${missingTokens.length}冊</span>${priceInline}${unitInline}</div>
+              <div class="book-counts">既刊${book.latest}巻 / 所持${mainOwned}巻<span class="book-rem-inline">あと${missingTokens.length}冊</span></div>
             </div>
             <button type="button" class="shop-select-all-btn ${allSelected ? "all-checked" : ""}" data-select-all-book="${book.id}">${allSelected ? "全解除" : "全選択"}</button>
           </div>
@@ -1579,8 +1561,6 @@ function renderList() {
     const missingText = formatMissingRanges(book);
     const pubMagText = formatPubMag(book);
     const statusTagClass = book.status === "完結" ? "tag-status-end" : "tag-status-on";
-    const priceVal = Number(book.price) || 0;
-    const unitPrice = getUnitPrice(book);
 
     const showDerivedBadge = derived === "未購入" || derived === "コンプ" || derived === "既刊まで所持";
     let derivedClass = "tag-owned-complete";
@@ -1601,12 +1581,6 @@ function renderList() {
       : "";
     const remInline = missingCount > 0
       ? `<span class="book-rem-inline">あと${missingCount}冊</span>`
-      : "";
-    const priceInline = priceVal > 0
-      ? `<span class="book-price-inline">¥${priceVal.toLocaleString()}</span>`
-      : "";
-    const unitInline = unitPrice > 0
-      ? `<span class="book-unit-inline">¥${unitPrice.toLocaleString()}/冊</span>`
       : "";
     const missingLine = missingText
       ? `<div class="book-missing-line">未所持：${escapeHtml(missingText)}</div>`
@@ -1630,7 +1604,7 @@ function renderList() {
           </div>
           <div class="book-title">${escapeHtml(book.title)}</div>
           ${pubLine}
-          <div class="book-counts">既刊${book.latest}巻 / 所持${mainOwned}巻${extraCountNote}${remInline}${priceInline}${unitInline}</div>
+          <div class="book-counts">既刊${book.latest}巻 / 所持${mainOwned}巻${extraCountNote}${remInline}</div>
           ${missingLine}
           ${memoLine}
         </div>
