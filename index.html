@@ -1302,11 +1302,15 @@ function getTotalPossibleCount(book) {
   return (Number(book.latest) || 0) + (book.hasVol0 ? 1 : 0) + (Number(book.spinoffTotal) || 0);
 }
 
+function getTotalMissingCount(book) {
+  return getMissingTokensForBook(book).length;
+}
+
 function getUnitPrice(book) {
   const price = Number(book.price) || 0;
-  const totalVols = getTotalPossibleCount(book);
-  if (price <= 0 || totalVols <= 0) return 0;
-  return Math.round(price / totalVols);
+  const missingVols = getTotalMissingCount(book);
+  if (price <= 0 || missingVols <= 0) return 0;
+  return Math.round(price / missingVols);
 }
 
 function hasAnyOwnedTitle(book) {
