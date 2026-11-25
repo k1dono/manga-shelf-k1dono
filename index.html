@@ -661,7 +661,7 @@ body.modal-open {
   padding: 14px 14px calc(36px + var(--safe-bottom));
 }
 
-/* Top Row inside Detail: Image Box vertically centered with Title & Yomi */
+/* Top Row inside Detail: Image Box vertically centered with Title & Pub/Mag */
 .detail-top-row {
   display: flex;
   align-items: center;
@@ -706,12 +706,38 @@ body.modal-open {
   display: block;
   border-radius: 9px;
 }
-.detail-title-yomi-col {
+.detail-title-pub-col {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+.title-yomi-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.inline-yomi-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: auto;
+}
+.inline-yomi-input {
+  width: 132px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  outline: none;
+}
+.inline-yomi-input:focus {
+  border-color: var(--accent);
 }
 .cover-remove-badge {
   position: absolute;
@@ -795,19 +821,15 @@ body.modal-open {
   font-weight: 800;
   text-align: center;
   outline: none;
+  -moz-appearance: textfield;
+}
+.custom-vol-input::-webkit-outer-spin-button,
+.custom-vol-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 .custom-vol-input:focus {
   border-color: var(--accent);
-}
-.mini-action-btn {
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  color: var(--accent);
-  border-radius: 7px;
-  padding: 3px 8px;
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
 }
 .text-input, .textarea-input {
   width: 100%;
@@ -1668,13 +1690,6 @@ function getUnitPrice(book) {
   return Math.round(price / missingVols);
 }
 
-function getCustomUnitPrice(book, vols) {
-  const price = Number(book.price) || 0;
-  const v = Number(vols) || 0;
-  if (price <= 0 || v <= 0) return 0;
-  return Math.round(price / v);
-}
-
 function hasAnyOwnedTitle(book) {
   return getTotalOwnedCount(book) > 0;
 }
@@ -2178,7 +2193,6 @@ function renderDetailBody() {
   const derived = getDerivedStatus(draftBook);
   const missingText = formatMissingRanges(draftBook);
   const unitPrice = getUnitPrice(draftBook);
-  const customUnit = getCustomUnitPrice(draftBook, customUnitVols);
 
   const showDerivedBadge = derived === "未購入" || derived === "コンプ" || derived === "既刊まで所持";
   let derivedClass = "tag-owned-complete";
@@ -2268,28 +2282,27 @@ function renderDetailBody() {
           <div class="cover-tap-box" id="coverTapBox" title="タップして画像を選択">${coverBoxContent}</div>
           ${draftCoverDataUrl ? `<button type="button" class="cover-remove-badge" id="removeCoverBtn" title="画像を削除" aria-label="画像を削除">✕</button>` : ""}
         </div>
-        <div class="detail-title-yomi-col">
+        <div class="detail-title-pub-col">
           <div class="field-row" style="margin-bottom:0;">
-            <label class="field-label">タイトル</label>
+            <div class="title-yomi-inline">
+              <label class="field-label">タイトル</label>
+              <div class="inline-yomi-group">
+                <label class="field-label" for="editYomi">読みがな</label>
+                <input type="text" id="editYomi" class="inline-yomi-input" value="${escapeHtml(draftBook.yomi)}" placeholder="" />
+              </div>
+            </div>
             <input type="text" id="editTitle" class="text-input" value="${escapeHtml(draftBook.title)}" placeholder="" />
           </div>
-          <div class="field-row" style="margin-bottom:0;">
-            <div class="field-label-line">
-              <label class="field-label">読みがな</label>
-              <button type="button" class="mini-action-btn" id="copyTitleToYomiBtn">タイトルをコピー</button>
+          <div class="field-row-2col" style="margin-bottom:0;">
+            <div class="field-row" style="margin-bottom:0;">
+              <label class="field-label">出版社</label>
+              <input type="text" id="editPublisher" class="text-input" value="${escapeHtml(draftBook.publisher)}" placeholder="" />
             </div>
-            <input type="text" id="editYomi" class="text-input" value="${escapeHtml(draftBook.yomi)}" placeholder="" />
+            <div class="field-row" style="margin-bottom:0;">
+              <label class="field-label">雑誌・レーベル</label>
+              <input type="text" id="editMagazine" class="text-input" value="${escapeHtml(draftBook.magazine)}" placeholder="" />
+            </div>
           </div>
-        </div>
-      </div>
-      <div class="field-row-2col">
-        <div class="field-row">
-          <label class="field-label">出版社</label>
-          <input type="text" id="editPublisher" class="text-input" value="${escapeHtml(draftBook.publisher)}" placeholder="" />
-        </div>
-        <div class="field-row">
-          <label class="field-label">雑誌・レーベル</label>
-          <input type="text" id="editMagazine" class="text-input" value="${escapeHtml(draftBook.magazine)}" placeholder="" />
         </div>
       </div>
       <div class="field-row-2col">
@@ -2316,7 +2329,6 @@ function renderDetailBody() {
             <span>指定巻数</span>
             <input type="number" id="customUnitVolsInput" class="custom-vol-input" min="1" max="${MAX_VOL}" value="${customUnitVols > 0 ? customUnitVols : ""}" placeholder="" />
             <span>冊</span>
-            <span id="customUnitPriceResult" style="color:#fdba74; font-weight:800;">${customUnit > 0 ? `¥${customUnit.toLocaleString()}/冊` : ""}</span>
             <span id="detailUnitPriceBadge" style="color:#6ee7b7; font-weight:800; margin-left:4px;">${unitPrice > 0 ? `¥${unitPrice.toLocaleString()}/冊` : ""}</span>
           </div>
         </div>
@@ -2374,10 +2386,6 @@ function renderDetailBody() {
     const u = getUnitPrice(draftBook);
     const badge = document.getElementById("detailUnitPriceBadge");
     if (badge) badge.textContent = u > 0 ? `¥${u.toLocaleString()}/冊` : "";
-
-    const cu = getCustomUnitPrice(draftBook, customUnitVols);
-    const cuEl = document.getElementById("customUnitPriceResult");
-    if (cuEl) cuEl.textContent = cu > 0 ? `¥${cu.toLocaleString()}/冊` : "";
   }
 
   // Cover Tap Events
@@ -2431,12 +2439,6 @@ function renderDetailBody() {
     if (draftBook.title.trim()) autoSaveDraftIfExisting();
   });
 
-  document.getElementById("copyTitleToYomiBtn").addEventListener("click", () => {
-    draftBook.yomi = draftBook.title;
-    document.getElementById("editYomi").value = draftBook.yomi;
-    autoSaveDraftIfExisting();
-  });
-
   document.getElementById("editYomi").addEventListener("input", e => {
     draftBook.yomi = e.target.value;
     autoSaveDraftIfExisting();
@@ -2479,7 +2481,6 @@ function renderDetailBody() {
     let val = parseInt(e.target.value, 10);
     if (isNaN(val) || val <= 0) customUnitVols = 0;
     else customUnitVols = Math.min(MAX_VOL, val);
-    refreshDetailPriceDisplays();
   });
 
   document.getElementById("editMemo").addEventListener("input", e => {
