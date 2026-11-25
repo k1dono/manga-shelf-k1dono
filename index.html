@@ -724,7 +724,7 @@ body.modal-open {
   color: #111827;
   border: 1px solid rgba(0, 0, 0, 0.14);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
-  display: inline-flex;
+  display: none;
   align-items: center;
   justify-content: center;
   font-size: 13px;
@@ -733,6 +733,9 @@ body.modal-open {
   cursor: pointer;
   padding: 0;
   z-index: 2;
+}
+.cover-col.show-remove .cover-remove-badge {
+  display: inline-flex;
 }
 .cover-remove-badge:active {
   transform: scale(0.92);
@@ -1413,6 +1416,7 @@ let searchQuery = "";
 let editingBookId = null;
 let draftBook = null;
 let draftCoverDataUrl = null;
+let showCoverRemoveBadge = false;
 let customUnitVols = 0;
 
 // Shopping tab selections
@@ -2109,6 +2113,7 @@ document.getElementById("commitShopSelectionBtn").addEventListener("click", () =
 function openDetailModal(bookId) {
   editingBookId = bookId;
   customUnitVols = 0;
+  showCoverRemoveBadge = false;
   if (bookId === null) {
     const maxId = books.reduce((m, b) => Math.max(m, b.id), 0);
     draftBook = normalizeBook({
@@ -2258,7 +2263,7 @@ function renderDetailBody() {
   body.innerHTML = `
     <div class="field-group">
       <div class="detail-top-row">
-        <div class="cover-col">
+        <div class="cover-col ${draftCoverDataUrl && showCoverRemoveBadge ? "show-remove" : ""}" id="coverCol">
           <input type="file" id="coverFileInput" accept="image/*" style="display:none;" />
           <div class="cover-tap-box" id="coverTapBox" title="タップして画像を選択">${coverBoxContent}</div>
           ${draftCoverDataUrl ? `<button type="button" class="cover-remove-badge" id="removeCoverBtn" title="画像を削除" aria-label="画像を削除">✕</button>` : ""}
@@ -2377,8 +2382,15 @@ function renderDetailBody() {
 
   // Cover Tap Events
   const coverFileInput = document.getElementById("coverFileInput");
-  document.getElementById("coverTapBox").addEventListener("click", () => {
-    coverFileInput.click();
+  document.getElementById("coverTapBox").addEventListener("click", e => {
+    e.stopPropagation();
+    if (draftCoverDataUrl) {
+      showCoverRemoveBadge = !showCoverRemoveBadge;
+      const col = document.getElementById("coverCol");
+      if (col) col.classList.toggle("show-remove", showCoverRemoveBadge);
+    } else {
+      coverFileInput.click();
+    }
   });
 
   coverFileInput.addEventListener("change", async e => {
@@ -2387,6 +2399,7 @@ function renderDetailBody() {
     try {
       const compressedUrl = await compressImageFile(file);
       draftCoverDataUrl = compressedUrl;
+      showCoverRemoveBadge = false;
       if (editingBookId !== null) {
         await saveCoverToDb(editingBookId, compressedUrl);
         renderList();
@@ -2403,6 +2416,7 @@ function renderDetailBody() {
     removeCoverBtn.addEventListener("click", async e => {
       e.stopPropagation();
       draftCoverDataUrl = null;
+      showCoverRemoveBadge = false;
       if (editingBookId !== null) {
         await saveCoverToDb(editingBookId, null);
         renderList();
@@ -2618,6 +2632,7 @@ function closeDetailModal() {
   editingBookId = null;
   draftBook = null;
   draftCoverDataUrl = null;
+  showCoverRemoveBadge = false;
   customUnitVols = 0;
 }
 
