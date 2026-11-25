@@ -722,22 +722,33 @@ body.modal-open {
 .inline-yomi-group {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   margin-left: auto;
+}
+.yomi-trigger-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-sub);
+  cursor: pointer;
+}
+.yomi-trigger-btn:active,
+.yomi-trigger-btn.has-value {
+  color: var(--text);
 }
 .inline-yomi-input {
   width: 132px;
   background: var(--surface-2);
-  border: 1px solid var(--border);
+  border: 1px solid var(--accent);
   color: var(--text);
   border-radius: 8px;
   padding: 4px 8px;
   font-size: 12px;
   font-weight: 600;
   outline: none;
-}
-.inline-yomi-input:focus {
-  border-color: var(--accent);
 }
 .cover-remove-badge {
   position: absolute;
@@ -830,6 +841,21 @@ body.modal-open {
 }
 .custom-vol-input:focus {
   border-color: var(--accent);
+}
+.price-single-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.price-single-row .text-input {
+  flex: 1;
+  min-width: 0;
+  -moz-appearance: textfield;
+}
+.price-single-row .text-input::-webkit-outer-spin-button,
+.price-single-row .text-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 .text-input, .textarea-input {
   width: 100%;
@@ -1440,6 +1466,7 @@ let draftBook = null;
 let draftCoverDataUrl = null;
 let showCoverRemoveBadge = false;
 let customUnitVols = 0;
+let yomiInputOpen = false;
 
 // Shopping tab selections
 const shoppingSelections = new Map();
@@ -1683,11 +1710,11 @@ function getTotalMissingCount(book) {
   return getMissingTokensForBook(book).length;
 }
 
-function getUnitPrice(book) {
+function getUnitPrice(book, customVols = 0) {
   const price = Number(book.price) || 0;
-  const missingVols = getTotalMissingCount(book);
-  if (price <= 0 || missingVols <= 0) return 0;
-  return Math.round(price / missingVols);
+  const vols = customVols > 0 ? Number(customVols) : getTotalMissingCount(book);
+  if (price <= 0 || vols <= 0) return 0;
+  return Math.round(price / vols);
 }
 
 function hasAnyOwnedTitle(book) {
@@ -2128,6 +2155,7 @@ document.getElementById("commitShopSelectionBtn").addEventListener("click", () =
 function openDetailModal(bookId) {
   editingBookId = bookId;
   customUnitVols = 0;
+  yomiInputOpen = false;
   showCoverRemoveBadge = false;
   if (bookId === null) {
     const maxId = books.reduce((m, b) => Math.max(m, b.id), 0);
@@ -2192,7 +2220,7 @@ function renderDetailBody() {
   const totalOwnedCount = getTotalOwnedCount(draftBook);
   const derived = getDerivedStatus(draftBook);
   const missingText = formatMissingRanges(draftBook);
-  const unitPrice = getUnitPrice(draftBook);
+  const unitPrice = getUnitPrice(draftBook, customUnitVols);
 
   const showDerivedBadge = derived === "未購入" || derived === "コンプ" || derived === "既刊まで所持";
   let derivedClass = "tag-owned-complete";
@@ -2274,6 +2302,10 @@ function renderDetailBody() {
     ? `<img src="${draftCoverDataUrl}" alt="表紙" />`
     : `<span>画像</span><span>未設定</span>`;
 
+  const yomiControlHtml = yomiInputOpen
+    ? `<input type="text" id="editYomi" class="inline-yomi-input" value="${escapeHtml(draftBook.yomi)}" placeholder="" />`
+    : `<button type="button" id="yomiTriggerBtn" class="yomi-trigger-btn ${draftBook.yomi ? "has-value" : ""}">読みがな</button>`;
+
   body.innerHTML = `
     <div class="field-group">
       <div class="detail-top-row">
@@ -2287,8 +2319,7 @@ function renderDetailBody() {
             <div class="title-yomi-inline">
               <label class="field-label">タイトル</label>
               <div class="inline-yomi-group">
-                <label class="field-label" for="editYomi">読みがな</label>
-                <input type="text" id="editYomi" class="inline-yomi-input" value="${escapeHtml(draftBook.yomi)}" placeholder="" />
+                ${yomiControlHtml}
               </div>
             </div>
             <input type="text" id="editTitle" class="text-input" value="${escapeHtml(draftBook.title)}" placeholder="" />
@@ -2323,16 +2354,16 @@ function renderDetailBody() {
         </div>
       </div>
       <div class="field-row">
-        <div class="field-label-line">
-          <label class="field-label">金額</label>
+        <label class="field-label">金額</label>
+        <div class="price-single-row">
+          <input type="number" id="editPrice" class="text-input" min="0" step="1" value="${Number(draftBook.price) || 0}" placeholder="" />
           <div class="price-calc-inline">
             <span>指定巻数</span>
             <input type="number" id="customUnitVolsInput" class="custom-vol-input" min="1" max="${MAX_VOL}" value="${customUnitVols > 0 ? customUnitVols : ""}" placeholder="" />
             <span>冊</span>
-            <span id="detailUnitPriceBadge" style="color:#6ee7b7; font-weight:800; margin-left:4px;">${unitPrice > 0 ? `¥${unitPrice.toLocaleString()}/冊` : ""}</span>
+            <span id="detailUnitPriceBadge" style="color:#6ee7b7; font-weight:800; margin-left:2px;">${unitPrice > 0 ? `¥${unitPrice.toLocaleString()}/冊` : ""}</span>
           </div>
         </div>
-        <input type="number" id="editPrice" class="text-input" min="0" step="1" value="${Number(draftBook.price) || 0}" placeholder="" />
       </div>
       <div class="field-row">
         <label class="field-label">メモ</label>
@@ -2383,9 +2414,32 @@ function renderDetailBody() {
   body.scrollTop = prevScroll;
 
   function refreshDetailPriceDisplays() {
-    const u = getUnitPrice(draftBook);
+    const u = getUnitPrice(draftBook, customUnitVols);
     const badge = document.getElementById("detailUnitPriceBadge");
     if (badge) badge.textContent = u > 0 ? `¥${u.toLocaleString()}/冊` : "";
+  }
+
+  // Yomi toggle input
+  const yomiTriggerBtn = document.getElementById("yomiTriggerBtn");
+  if (yomiTriggerBtn) {
+    yomiTriggerBtn.addEventListener("click", () => {
+      yomiInputOpen = true;
+      renderDetailBody();
+      const inp = document.getElementById("editYomi");
+      if (inp) inp.focus();
+    });
+  }
+
+  const editYomiInput = document.getElementById("editYomi");
+  if (editYomiInput) {
+    editYomiInput.addEventListener("input", e => {
+      draftBook.yomi = e.target.value;
+      autoSaveDraftIfExisting();
+    });
+    editYomiInput.addEventListener("blur", () => {
+      yomiInputOpen = false;
+      renderDetailBody();
+    });
   }
 
   // Cover Tap Events
@@ -2439,11 +2493,6 @@ function renderDetailBody() {
     if (draftBook.title.trim()) autoSaveDraftIfExisting();
   });
 
-  document.getElementById("editYomi").addEventListener("input", e => {
-    draftBook.yomi = e.target.value;
-    autoSaveDraftIfExisting();
-  });
-
   document.getElementById("editPublisher").addEventListener("input", e => {
     draftBook.publisher = e.target.value;
     autoSaveDraftIfExisting();
@@ -2481,6 +2530,7 @@ function renderDetailBody() {
     let val = parseInt(e.target.value, 10);
     if (isNaN(val) || val <= 0) customUnitVols = 0;
     else customUnitVols = Math.min(MAX_VOL, val);
+    refreshDetailPriceDisplays();
   });
 
   document.getElementById("editMemo").addEventListener("input", e => {
@@ -2635,6 +2685,7 @@ function closeDetailModal() {
   draftCoverDataUrl = null;
   showCoverRemoveBadge = false;
   customUnitVols = 0;
+  yomiInputOpen = false;
 }
 
 document.getElementById("closeDetailBtn").addEventListener("click", closeDetailModal);
