@@ -1089,7 +1089,7 @@ select {
   background: var(--red-bg);
 }
 
-/* Backup Modal */
+/* Backup & Snapshot Modal */
 .backup-box {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -1106,6 +1106,55 @@ select {
   font-size: 13px;
   color: var(--text-sub);
   line-height: 1.5;
+}
+.snapshot-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.snapshot-item {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.snapshot-meta {
+  min-width: 0;
+  flex: 1;
+}
+.snapshot-time {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text);
+}
+.snapshot-detail {
+  font-size: 11px;
+  color: var(--text-sub);
+  margin-top: 2px;
+}
+.snapshot-restore-btn {
+  background: var(--blue-bg);
+  border: 1px solid rgba(59, 130, 246, 0.5);
+  color: var(--blue-text);
+  border-radius: 8px;
+  padding: 7px 11px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.snapshot-empty {
+  font-size: 12px;
+  color: var(--text-sub);
+  background: var(--surface-2);
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  text-align: center;
 }
 .danger-btn {
   background: var(--red-bg);
@@ -1251,9 +1300,9 @@ select {
         <button type="button" class="icon-btn" style="width:100%; height:42px;" id="importJsonBtn">ファイルを選択して復元</button>
       </div>
       <div class="backup-box">
-        <h3>🔄 初期データ（72作品）に戻す</h3>
-        <p>最初に読み込んだ72作品の状態にリセットします。</p>
-        <button type="button" class="danger-btn" style="margin-top:4px;" id="resetInitialBtn">初期72作品にリセット</button>
+        <h3>🕒 自動スナップショット（直前の状態に戻す）</h3>
+        <p>追加・削除・一括購入などの変更前に自動で保存された履歴（最新5件）です。誤操作したときにワンタップで戻せます。</p>
+        <div class="snapshot-list" id="snapshotList"></div>
       </div>
     </div>
   </div>
@@ -1261,8 +1310,10 @@ select {
 
 <script>
 const MAX_VOL = 500;
+const MAX_SNAPSHOTS = 5;
 const INITIAL_BOOKS = [{"id": 1, "title": "ニセコイ", "yomi": "にせこい", "publisher": "集英社", "magazine": "ジャンプ", "status": "完結", "latest": 25, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 1, "spinoffOwned": [1]}, {"id": 2, "title": "約束のネバーランド", "yomi": "やくそくのねばーらんど", "publisher": "集英社", "magazine": "ジャンプ", "status": "完結", "latest": 20, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 3, "title": "暗殺教室", "yomi": "あんさつきょうしつ", "publisher": "集英社", "magazine": "ジャンプ", "status": "完結", "latest": 21, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 4, "title": "鬼滅の刃", "yomi": "きめつのやいば", "publisher": "集英社", "magazine": "ジャンプ", "status": "完結", "latest": 23, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 5, "title": "呪術廻戦", "yomi": "じゅじゅつかいせん", "publisher": "集英社", "magazine": "ジャンプ", "status": "完結", "latest": 30, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26], "hasVol0": true, "vol0Owned": true, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 6, "title": "ワールドトリガー", "yomi": "わーるどとりがー", "publisher": "集英社", "magazine": "ジャンプ", "status": "連載中", "latest": 30, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 7, "title": "SPY×FAMILY", "yomi": "すぱいふぁみりー", "publisher": "集英社", "magazine": "ジャンプ＋", "status": "連載中", "latest": 18, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 8, "title": "東京喰種", "yomi": "とうきょうぐーる", "publisher": "集英社", "magazine": "ヤングジャンプ", "status": "完結", "latest": 14, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 9, "title": "東京喰種：re", "yomi": "とうきょうぐーるあーるいー", "publisher": "集英社", "magazine": "ヤングジャンプ", "status": "完結", "latest": 16, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 10, "title": "呪術廻戦≡", "yomi": "じゅじゅつかいせんもじゅろ", "publisher": "集英社", "magazine": "ジャンプ", "status": "完結", "latest": 3, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 11, "title": "かぐや様は告らせたい 〜天才たちの恋愛頭脳戦〜", "yomi": "かぐやさまはこくらせたい", "publisher": "集英社", "magazine": "ヤングジャンプ", "status": "完結", "latest": 27, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 12, "title": "推しの子", "yomi": "おしのこ", "publisher": "集英社", "magazine": "ジャンプ", "status": "完結", "latest": 16, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 13, "title": "テラフォーマーズ", "yomi": "てらふぉーまーず", "publisher": "集英社", "magazine": "ヤングジャンプ", "status": "連載中", "latest": 24, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 14, "title": "青のフラッグ", "yomi": "あおのふらっぐ", "publisher": "集英社", "magazine": "ジャンプ＋", "status": "完結", "latest": 8, "owned": [1, 2, 3, 4, 5, 6, 7, 8], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 15, "title": "阿波連さんははかれない", "yomi": "あはれんさんははかれない", "publisher": "出版社", "magazine": "ジャンプ＋", "status": "完結", "latest": 17, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 16, "title": "FAIRY TAIL", "yomi": "ふぇありーている", "publisher": "講談社", "magazine": "マガジン", "status": "完結", "latest": 63, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 17, "title": "進撃の巨人", "yomi": "しんげきのきょじん", "publisher": "講談社", "magazine": "マガジン", "status": "完結", "latest": 34, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 18, "title": "進撃の巨人 悔いなき選択", "yomi": "しんげきのきょじんくいなきせんたく", "publisher": "講談社", "magazine": "ARIA", "status": "完結", "latest": 2, "owned": [1, 2], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 19, "title": "トモダチゲーム", "yomi": "ともだちげーむ", "publisher": "講談社", "magazine": "マガジン", "status": "完結", "latest": 26, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 20, "title": "山田くんと7人の魔女", "yomi": "やまだくんとななにんのまじょ", "publisher": "講談社", "magazine": "マガジン", "status": "完結", "latest": 28, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 1, "spinoffOwned": [1]}, {"id": 21, "title": "カッコウの許嫁", "yomi": "かっこうのいいなずけ", "publisher": "講談社", "magazine": "マガジン", "status": "連載中", "latest": 34, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 22, "title": "彼女、お借りします", "yomi": "かのじょおかりします", "publisher": "講談社", "magazine": "マガジン", "status": "連載中", "latest": 48, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 23, "title": "五等分の花嫁", "yomi": "ごとうぶんのはなよめ", "publisher": "講談社", "magazine": "マガジン", "status": "完結", "latest": 14, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 5, "spinoffOwned": [1, 2, 3, 4, 5]}, {"id": 24, "title": "東京卍リベンジャーズ", "yomi": "とうきょうりべんじゃーず", "publisher": "講談社", "magazine": "マガジン", "status": "完結", "latest": 31, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 25, "title": "寄宿学校のジュリエット", "yomi": "きしゅくがっこうのじゅりえっと", "publisher": "講談社", "magazine": "マガジン", "status": "完結", "latest": 16, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 26, "title": "ランウェイで笑って", "yomi": "らんうぇいでわらって", "publisher": "講談社", "magazine": "マガジン", "status": "完結", "latest": 22, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 27, "title": "食糧人間-Straving Anonymous-", "yomi": "しょくりょうにんげん", "publisher": "講談社", "magazine": "ヤングマガジン", "status": "完結", "latest": 7, "owned": [1, 2, 3, 4, 5, 6, 7], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 28, "title": "食糧人間Re:-Straving Re:elation-", "yomi": "しょくりょうにんげんあーるいー", "publisher": "講談社", "magazine": "コミックDAYS", "status": "完結", "latest": 7, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 29, "title": "青のオーケストラ", "yomi": "あおのおーけすとら", "publisher": "小学館", "magazine": "裏サンデー", "status": "連載中", "latest": 16, "owned": [1, 2, 3, 4, 5, 6, 7, 8], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 30, "title": "プロミス・シンデレラ", "yomi": "ぷろみすしんでれら", "publisher": "小学館", "magazine": "裏サンデー", "status": "完結", "latest": 16, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 31, "title": "ダーウィンズゲーム", "yomi": "だーうぃんずげーむ", "publisher": "秋田書店", "magazine": "チャンピオン", "status": "完結", "latest": 30, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 32, "title": "じいさんばあさん若返る", "yomi": "じいさんばあさんわかがえる", "publisher": "KADOKAWA", "magazine": "カドコミ", "status": "完結", "latest": 8, "owned": [1, 2, 3, 4, 5, 6, 7, 8], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 33, "title": "喰霊", "yomi": "がれい", "publisher": "KADOKAWA", "magazine": "エース", "status": "完結", "latest": 12, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 34, "title": "この美術部には問題がある", "yomi": "このびじゅつぶにはもんだいがある", "publisher": "KADOKAWA", "magazine": "電撃マオウ", "status": "連載中", "latest": 15, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 35, "title": "坂本ですが？", "yomi": "さかもとですが", "publisher": "KADOKAWA", "magazine": "ハルタ", "status": "完結", "latest": 4, "owned": [1, 2, 3, 4], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 36, "title": "三国志", "yomi": "さんごくし", "publisher": "", "magazine": "", "status": "完結", "latest": 60, "owned": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 37, "title": "赤髪の白雪姫", "yomi": "あかがみのしらゆきひめ", "publisher": "白泉社", "magazine": "LaLa", "status": "連載中", "latest": 27, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 38, "title": "俺だけレベルアップな件", "yomi": "おれだけれべるあっぷなけん", "publisher": "KADOKAWA", "magazine": "KakaoPage", "status": "完結", "latest": 25, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 39, "title": "可愛い上司を困らせたい", "yomi": "かわいいじょうし", "publisher": "芳文社", "magazine": "まんがタイム", "status": "完結", "latest": 8, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 40, "title": "キングダム", "yomi": "きんぐだむ", "publisher": "集英社", "magazine": "ヤングジャンプ", "status": "連載中", "latest": 81, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 41, "title": "恋と嘘", "yomi": "こいとうそ", "publisher": "講談社", "magazine": "Manga Box", "status": "完結", "latest": 13, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 42, "title": "サイコアイズ", "yomi": "さいこあいず", "publisher": "小学館", "magazine": "サンデーうぇぶり", "status": "連載中", "latest": 8, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 43, "title": "SAKAMOTO DAYS", "yomi": "さかもとでいず", "publisher": "集英社", "magazine": "ジャンプ", "status": "連載中", "latest": 29, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 44, "title": "咲-Saki-", "yomi": "さき", "publisher": "スクウェア・エニックス", "magazine": "ガンガン", "status": "連載中", "latest": 26, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 45, "title": "咲-Saki- 阿知賀編", "yomi": "さきあちがへん", "publisher": "スクウェア・エニックス", "magazine": "ガンガン", "status": "連載中", "latest": 8, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 46, "title": "サマータイムレンダ", "yomi": "さまーたいむれんだ", "publisher": "集英社", "magazine": "ジャンプ＋", "status": "完結", "latest": 13, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 47, "title": "塩対応の佐藤さんが俺だけに甘い", "yomi": "しおたいおうのさとうさんがおれだけにあまい", "publisher": "小学館", "magazine": "裏サンデー", "status": "連載中", "latest": 11, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 48, "title": "進撃!巨人中学校", "yomi": "しんげききょじんちゅうがっこう", "publisher": "講談社", "magazine": "別冊マガジン", "status": "完結", "latest": 11, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 49, "title": "進撃の巨人 Before the fall", "yomi": "しんげきのきょじんびふぉーざふぉーる", "publisher": "講談社", "magazine": "シリウス", "status": "完結", "latest": 17, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 50, "title": "城下町のダンデライオン", "yomi": "じょうかまちのだんでらいおん", "publisher": "芳文社", "magazine": "まんがたいむ", "status": "連載中", "latest": 8, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 51, "title": "トリニティセブン 7人の魔書使い", "yomi": "とりにてぃせぶん", "publisher": "KADOKAWA", "magazine": "ドラゴンエイジ", "status": "連載中", "latest": 35, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 52, "title": "ドラハチ", "yomi": "どらはち", "publisher": "講談社", "magazine": "マガジン", "status": "連載中", "latest": 11, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 53, "title": "七つの大罪", "yomi": "ななつの", "publisher": "講談社", "magazine": "マガジン", "status": "完結", "latest": 41, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 54, "title": "NARUTO", "yomi": "なると", "publisher": "集英社", "magazine": "ジャンプ", "status": "完結", "latest": 72, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 55, "title": "日本三國", "yomi": "にっぽんさんごく", "publisher": "小学館", "magazine": "マンガワン", "status": "連載中", "latest": 7, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 56, "title": "氷菓", "yomi": "ひょうか", "publisher": "KADOKAWA", "magazine": "エース", "status": "連載中", "latest": 17, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 57, "title": "FAIRYTAIL 100 YEARS QUEST", "yomi": "ふぇありーているひゃくねんくえすと", "publisher": "講談社", "magazine": "マガジンポケット", "status": "連載中", "latest": 23, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 58, "title": "BLODY MONDAY", "yomi": "ぶらっでぃまんでい", "publisher": "講談社", "magazine": "マガジン", "status": "完結", "latest": 11, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 59, "title": "BLODY MONDAY Season2 絶望ノ匣", "yomi": "ぶらっでぃまんでい2", "publisher": "講談社", "magazine": "マガジン", "status": "完結", "latest": 8, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 60, "title": "BLODY MONDAY ラストシーズン", "yomi": "ぶらっでぃまんでい3", "publisher": "講談社", "magazine": "マガジン", "status": "完結", "latest": 4, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 61, "title": "宝石の国", "yomi": "ほうせきのくに", "publisher": "講談社", "magazine": "アフタヌーン", "status": "完結", "latest": 13, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 62, "title": "僕だけがいない街", "yomi": "ぼくだけがいないまち", "publisher": "KADOKAWA", "magazine": "ヤングエース", "status": "完結", "latest": 9, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 63, "title": "僕のヒーローアカデミア", "yomi": "ぼくのひーろーあかでみあ", "publisher": "集英社", "magazine": "ジャンプ", "status": "完結", "latest": 42, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 64, "title": "マジカルパティシエ小咲ちゃん！！", "yomi": "まじかるぱてぃしえ", "publisher": "集英社", "magazine": "ジャンプ＋", "status": "完結", "latest": 4, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 65, "title": "名探偵コナン", "yomi": "めいたんていこなん", "publisher": "小学館", "magazine": "サンデー", "status": "連載中", "latest": 110, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 66, "title": "山田くんとLv999の恋をする", "yomi": "やまだくんとれべる999のこいをする", "publisher": "KADOKAWA", "magazine": "GANMA!", "status": "連載中", "latest": 10, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 67, "title": "LV999の村人", "yomi": "れべる999のむらびと", "publisher": "KADOKAWA", "magazine": "カドコミ", "status": "連載中", "latest": 21, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 68, "title": "ONE PIECE", "yomi": "わんぴーす", "publisher": "集英社", "magazine": "ジャンプ", "status": "連載中", "latest": 115, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 69, "title": "終末のワルキューレ", "yomi": "しゅうまつのわるきゅーれ", "publisher": "コアコミックス", "magazine": "ゼノン", "status": "連載中", "latest": 29, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 70, "title": "FAIRYTAIL ZERO", "yomi": "ふぇあらーているぜろ", "publisher": "講談社", "magazine": "マガジン", "status": "完結", "latest": 1, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 71, "title": "政宗くんのリベンジ", "yomi": "まさむねくんのりべんじ", "publisher": "一迅社", "magazine": "ComicREX", "status": "連載中", "latest": 13, "owned": [], "hasVol0": true, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}, {"id": 72, "title": "ばらかもん", "yomi": "ばらかもん", "publisher": "スクウェア・エニックス", "magazine": "ガンガン", "status": "連載中", "latest": 19, "owned": [], "hasVol0": false, "vol0Owned": false, "spinoffTotal": 0, "spinoffOwned": []}];
 const STORAGE_KEY = "manga_shelf_v4_data";
+const SNAPSHOT_KEY = "manga_shelf_v4_snapshots";
 const DB_NAME = "manga_shelf_covers_db";
 const DB_STORE = "covers";
 
@@ -1457,6 +1508,121 @@ function saveBooks(list) {
   }
 }
 
+function loadSnapshots() {
+  try {
+    const raw = window.localStorage.getItem(SNAPSHOT_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return parsed.filter(item => item && Array.isArray(item.books));
+      }
+    }
+  } catch (e) {
+    console.warn("Snapshot load fallback:", e);
+  }
+  return [];
+}
+
+function writeSnapshots(list) {
+  try {
+    window.localStorage.setItem(SNAPSHOT_KEY, JSON.stringify(list.slice(0, MAX_SNAPSHOTS)));
+  } catch (e) {
+    console.warn("Snapshot write warning:", e);
+  }
+}
+
+function formatSnapshotTimestamp(isoStr) {
+  try {
+    const d = new Date(isoStr);
+    if (isNaN(d.getTime())) return isoStr;
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    const hh = String(d.getHours()).padStart(2, "0");
+    const mi = String(d.getMinutes()).padStart(2, "0");
+    const ss = String(d.getSeconds()).padStart(2, "0");
+    return `${mm}/${dd} ${hh}:${mi}:${ss}`;
+  } catch (e) {
+    return isoStr;
+  }
+}
+
+function createSnapshot(reason = "変更前") {
+  const snaps = loadSnapshots();
+  const booksCopy = books.map(b => normalizeBook(b));
+  const coversCopy = {};
+  booksCopy.forEach(b => {
+    const c = coverMap.get(Number(b.id));
+    if (c) coversCopy[String(b.id)] = c;
+  });
+  const totalVols = booksCopy.reduce((sum, b) => sum + getTotalOwnedCount(b), 0);
+  const newSnap = {
+    id: `${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+    savedAt: new Date().toISOString(),
+    reason,
+    bookCount: booksCopy.length,
+    totalOwnedVols: totalVols,
+    books: booksCopy,
+    covers: coversCopy
+  };
+  const nextSnaps = [newSnap, ...snaps].slice(0, MAX_SNAPSHOTS);
+  writeSnapshots(nextSnaps);
+}
+
+function renderSnapshotList() {
+  const listEl = document.getElementById("snapshotList");
+  if (!listEl) return;
+  const snaps = loadSnapshots();
+  if (snaps.length === 0) {
+    listEl.innerHTML = `<div class="snapshot-empty">まだ自動スナップショットはありません。作品を追加・削除・一括購入すると自動で記録されます。</div>`;
+    return;
+  }
+  listEl.innerHTML = snaps.map((snap, idx) => {
+    const timeLabel = formatSnapshotTimestamp(snap.savedAt);
+    const reasonLabel = escapeHtml(snap.reason || "変更前");
+    const detailLabel = `${reasonLabel} ・ ${Number(snap.bookCount) || 0}作品 / 所持${Number(snap.totalOwnedVols) || 0}冊`;
+    return `
+      <div class="snapshot-item">
+        <div class="snapshot-meta">
+          <div class="snapshot-time">${idx === 0 ? "最新: " : ""}${escapeHtml(timeLabel)}</div>
+          <div class="snapshot-detail">${detailLabel}</div>
+        </div>
+        <button type="button" class="snapshot-restore-btn" data-snap-id="${escapeHtml(snap.id)}">この状態に戻す</button>
+      </div>
+    `;
+  }).join("");
+
+  listEl.querySelectorAll(".snapshot-restore-btn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const snapId = btn.getAttribute("data-snap-id");
+      const currentSnaps = loadSnapshots();
+      const target = currentSnaps.find(s => s.id === snapId);
+      if (!target) return;
+      if (!confirm(`${formatSnapshotTimestamp(target.savedAt)}（${target.reason || "変更前"}）の状態に戻しますか？`)) {
+        return;
+      }
+      await clearAllCoversFromDb();
+      const restoredBooks = target.books.map(b => normalizeBook(b));
+      if (target.covers && typeof target.covers === "object") {
+        for (const [k, url] of Object.entries(target.covers)) {
+          if (typeof url === "string" && url.startsWith("data:image/")) {
+            await saveCoverToDb(Number(k), url);
+          }
+        }
+      }
+      books = restoredBooks;
+      shoppingSelections.clear();
+      calcSelectedIds.clear();
+      saveBooks(books);
+      refreshPubFilterOptions();
+      renderList();
+      renderSnapshotList();
+      document.getElementById("backupModal").classList.remove("open");
+      document.body.classList.remove("modal-open");
+      alert("スナップショットの状態に復元しました。");
+    });
+  });
+}
+
 let books = loadBooks();
 if (!Array.isArray(books) || books.length === 0) {
   books = cloneInitialBooks();
@@ -1474,6 +1640,7 @@ let draftBook = null;
 let draftCoverDataUrl = null;
 let showCoverRemoveBadge = false;
 let yomiInputOpen = false;
+let detailSnapshotTaken = false;
 
 // Shopping tab selections
 const shoppingSelections = new Map();
@@ -1626,6 +1793,10 @@ function refreshPubFilterOptions() {
 
 function autoSaveDraftIfExisting() {
   if (editingBookId !== null && draftBook) {
+    if (!detailSnapshotTaken) {
+      createSnapshot(`「${draftBook.title || "作品"}」編集前`);
+      detailSnapshotTaken = true;
+    }
     draftBook = normalizeBook(draftBook);
     const idx = books.findIndex(b => b.id === editingBookId);
     if (idx !== -1) {
@@ -2124,6 +2295,8 @@ document.getElementById("commitShopSelectionBtn").addEventListener("click", () =
     alert("購入した巻を選択してください。");
     return;
   }
+  createSnapshot(`未所持 ${totalSelected}冊購入確定前`);
+
   shoppingSelections.forEach((tokenSet, bookId) => {
     if (tokenSet.size === 0) return;
     const idx = books.findIndex(b => b.id === bookId);
@@ -2163,6 +2336,7 @@ function openDetailModal(bookId) {
   editingBookId = bookId;
   yomiInputOpen = false;
   showCoverRemoveBadge = false;
+  detailSnapshotTaken = false;
   if (bookId === null) {
     const maxId = books.reduce((m, b) => Math.max(m, b.id), 0);
     draftBook = normalizeBook({
@@ -2471,6 +2645,10 @@ function renderDetailBody() {
       draftCoverDataUrl = compressedUrl;
       showCoverRemoveBadge = false;
       if (editingBookId !== null) {
+        if (!detailSnapshotTaken) {
+          createSnapshot(`「${draftBook.title || "作品"}」表紙変更前`);
+          detailSnapshotTaken = true;
+        }
         await saveCoverToDb(editingBookId, compressedUrl);
         renderList();
       }
@@ -2488,6 +2666,10 @@ function renderDetailBody() {
       draftCoverDataUrl = null;
       showCoverRemoveBadge = false;
       if (editingBookId !== null) {
+        if (!detailSnapshotTaken) {
+          createSnapshot(`「${draftBook.title || "作品"}」表紙削除前`);
+          detailSnapshotTaken = true;
+        }
         await saveCoverToDb(editingBookId, null);
         renderList();
       }
@@ -2672,6 +2854,7 @@ function renderDetailBody() {
   if (delBtn) {
     delBtn.addEventListener("click", async () => {
       if (confirm(`本当に「${draftBook.title}」を本棚から削除しますか？`)) {
+        createSnapshot(`「${draftBook.title}」削除前`);
         const targetId = editingBookId;
         books = books.filter(b => b.id !== targetId);
         shoppingSelections.delete(targetId);
@@ -2694,6 +2877,7 @@ function closeDetailModal() {
   draftCoverDataUrl = null;
   showCoverRemoveBadge = false;
   yomiInputOpen = false;
+  detailSnapshotTaken = false;
 }
 
 document.getElementById("closeDetailBtn").addEventListener("click", closeDetailModal);
@@ -2707,6 +2891,9 @@ document.getElementById("saveDetailBtn").addEventListener("click", async () => {
   if (!draftBook.title.trim()) {
     alert("タイトルを入力してください。");
     return;
+  }
+  if (editingBookId === null) {
+    createSnapshot(`「${draftBook.title.trim()}」追加前`);
   }
   draftBook = normalizeBook({
     ...draftBook,
@@ -2783,6 +2970,7 @@ document.getElementById("addBookBtn").addEventListener("click", () => openDetail
 
 // Backup modal
 document.getElementById("openBackupBtn").addEventListener("click", () => {
+  renderSnapshotList();
   document.getElementById("backupModal").classList.add("open");
   document.body.classList.add("modal-open");
 });
@@ -2821,6 +3009,7 @@ document.getElementById("importJsonInput").addEventListener("change", e => {
     try {
       const imported = JSON.parse(ev.target.result);
       if (!Array.isArray(imported)) throw new Error("Invalid format");
+      createSnapshot("JSON復元前");
       await clearAllCoversFromDb();
       const normalizedList = [];
       for (const rawItem of imported) {
@@ -2836,6 +3025,7 @@ document.getElementById("importJsonInput").addEventListener("change", e => {
       saveBooks(books);
       refreshPubFilterOptions();
       renderList();
+      renderSnapshotList();
       document.getElementById("backupModal").classList.remove("open");
       document.body.classList.remove("modal-open");
       alert(`${books.length}作品のデータを復元しました。`);
@@ -2845,19 +3035,6 @@ document.getElementById("importJsonInput").addEventListener("change", e => {
   };
   reader.readAsText(file);
   e.target.value = "";
-});
-document.getElementById("resetInitialBtn").addEventListener("click", async () => {
-  if (confirm("現在のデータを消去して、最初の72作品データに戻しますか？")) {
-    await clearAllCoversFromDb();
-    books = cloneInitialBooks();
-    shoppingSelections.clear();
-    calcSelectedIds.clear();
-    saveBooks(books);
-    refreshPubFilterOptions();
-    renderList();
-    document.getElementById("backupModal").classList.remove("open");
-    document.body.classList.remove("modal-open");
-  }
 });
 
 // Initial boot
