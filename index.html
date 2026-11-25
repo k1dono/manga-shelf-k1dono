@@ -713,18 +713,29 @@ body.modal-open {
   flex-direction: column;
   gap: 10px;
 }
-.cover-clear-link {
+.cover-remove-badge {
   position: absolute;
-  top: 100%;
-  margin-top: 3px;
-  background: transparent;
-  border: none;
-  color: var(--red-text);
-  font-size: 11px;
-  font-weight: 700;
+  top: 5px;
+  right: 5px;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.94);
+  color: #111827;
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1;
   cursor: pointer;
-  padding: 1px 4px;
-  white-space: nowrap;
+  padding: 0;
+  z-index: 2;
+}
+.cover-remove-badge:active {
+  transform: scale(0.92);
 }
 
 /* Form in Detail */
@@ -753,12 +764,37 @@ body.modal-open {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  flex-wrap: wrap;
+  gap: 6px 8px;
 }
 .field-label {
   font-size: 12px;
   font-weight: 700;
   color: var(--text-sub);
+}
+.price-calc-inline {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text-sub);
+  font-weight: 700;
+}
+.custom-vol-input {
+  width: 50px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 2px 5px;
+  font-size: 12px;
+  font-weight: 800;
+  text-align: center;
+  outline: none;
+}
+.custom-vol-input:focus {
+  border-color: var(--accent);
 }
 .mini-action-btn {
   background: var(--surface-2);
@@ -787,41 +823,6 @@ body.modal-open {
   line-height: 1.45;
 }
 .text-input:focus, .textarea-input:focus {
-  border-color: var(--accent);
-}
-.custom-unit-box {
-  margin-top: 6px;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 8px 10px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.custom-unit-left {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: var(--text-sub);
-  font-weight: 700;
-}
-.custom-vol-input {
-  width: 72px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  color: var(--text);
-  border-radius: 8px;
-  padding: 5px 7px;
-  font-size: 14px;
-  font-weight: 800;
-  text-align: center;
-  outline: none;
-}
-.custom-vol-input:focus {
   border-color: var(--accent);
 }
 .stepper-wrap {
@@ -2260,7 +2261,7 @@ function renderDetailBody() {
         <div class="cover-col">
           <input type="file" id="coverFileInput" accept="image/*" style="display:none;" />
           <div class="cover-tap-box" id="coverTapBox" title="タップして画像を選択">${coverBoxContent}</div>
-          ${draftCoverDataUrl ? `<button type="button" class="cover-clear-link" id="removeCoverBtn">削除</button>` : ""}
+          ${draftCoverDataUrl ? `<button type="button" class="cover-remove-badge" id="removeCoverBtn" title="画像を削除" aria-label="画像を削除">✕</button>` : ""}
         </div>
         <div class="detail-title-yomi-col">
           <div class="field-row" style="margin-bottom:0;">
@@ -2306,17 +2307,15 @@ function renderDetailBody() {
       <div class="field-row">
         <div class="field-label-line">
           <label class="field-label">金額</label>
-          <span id="detailUnitPriceBadge" style="font-size:12px; font-weight:700; color:#6ee7b7;">${unitPrice > 0 ? `¥${unitPrice.toLocaleString()}/冊` : ""}</span>
+          <div class="price-calc-inline">
+            <span>指定巻数</span>
+            <input type="number" id="customUnitVolsInput" class="custom-vol-input" min="1" max="${MAX_VOL}" value="${customUnitVols > 0 ? customUnitVols : ""}" placeholder="" />
+            <span>冊</span>
+            <span id="customUnitPriceResult" style="color:#fdba74; font-weight:800;">${customUnit > 0 ? `¥${customUnit.toLocaleString()}/冊` : ""}</span>
+            <span id="detailUnitPriceBadge" style="color:#6ee7b7; font-weight:800; margin-left:4px;">${unitPrice > 0 ? `¥${unitPrice.toLocaleString()}/冊` : ""}</span>
+          </div>
         </div>
         <input type="number" id="editPrice" class="text-input" min="0" step="1" value="${Number(draftBook.price) || 0}" placeholder="" />
-        <div class="custom-unit-box">
-          <div class="custom-unit-left">
-            <span>指定巻数</span>
-            <input type="number" id="customUnitVolsInput" class="custom-vol-input" min="1" max="${MAX_VOL}" value="${customUnitVols > 0 ? customUnitVols : ""}" placeholder="例:79" />
-            <span>冊で計算</span>
-          </div>
-          <span id="customUnitPriceResult" style="font-size:13px; font-weight:800; color:#fdba74;">${customUnit > 0 ? `¥${customUnit.toLocaleString()}/冊` : ""}</span>
-        </div>
       </div>
       <div class="field-row">
         <label class="field-label">メモ</label>
@@ -2401,7 +2400,8 @@ function renderDetailBody() {
 
   const removeCoverBtn = document.getElementById("removeCoverBtn");
   if (removeCoverBtn) {
-    removeCoverBtn.addEventListener("click", async () => {
+    removeCoverBtn.addEventListener("click", async e => {
+      e.stopPropagation();
       draftCoverDataUrl = null;
       if (editingBookId !== null) {
         await saveCoverToDb(editingBookId, null);
